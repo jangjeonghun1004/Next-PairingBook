@@ -18,7 +18,7 @@ export default function Home() {
           </div>
         </div>
         <a 
-          href="#" 
+          href="/stories" 
           className="flex items-center gap-1 md:gap-2 text-gray-300 hover:text-white text-sm font-medium transition-all duration-300 group"
         >
           <span>둘러 보기</span>

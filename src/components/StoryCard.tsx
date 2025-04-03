@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MessageCircle, Bookmark } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import StoryDetailModal from "./StoryDetailModal";
 

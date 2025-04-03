@@ -62,7 +62,7 @@ export default function Home() {
               </div>
               <div className="mt-8 md:mt-12 text-center">
                 <a 
-                  href="#" 
+                  href="/stories" 
                   className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-indigo-500/25"
                 >
                   <span>둘러 보기</span>

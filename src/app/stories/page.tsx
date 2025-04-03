@@ -1,5 +1,5 @@
 'use client';
-import { ArrowLeft, Search, Home, BookOpen, Bookmark, User } from "lucide-react";
+import { Search, Home, BookOpen, Bookmark, User } from "lucide-react";
 import Link from "next/link";
 import StoryCard from "@/components/StoryCard";
 import HamburgerMenu from "@/components/HamburgerMenu";

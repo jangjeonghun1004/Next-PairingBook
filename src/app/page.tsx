@@ -7,7 +7,7 @@ export default function Home() {
       {/* 상단 헤더 */}
       <header className="fixed top-0 left-0 right-0 h-16 md:h-20 flex items-center justify-between px-4 md:px-6 bg-gray-900/80 backdrop-blur-sm z-50">
         <div className="flex items-center gap-2 md:gap-4">
-          <Logo width={32} height={32} className="md:w-10 md:h-10" strokeColor="#fff" />
+          <Logo size="lg"/>
           <div className="flex items-baseline gap-1 md:gap-2">
             <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
               페어링

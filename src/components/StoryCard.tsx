@@ -1,8 +1,9 @@
 'use client';
 
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight, User, Flag, Shield, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import StoryDetailModal from "./StoryDetailModal";
+import Logo from "./Logo";
 
 interface StoryCardProps {
   author: string;
@@ -27,8 +28,11 @@ export default function StoryCard({
 }: StoryCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  // const [hasOverflow, setHasOverflow] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
+  // const [hasOverflow, setHasOverflow] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -36,6 +40,18 @@ export default function StoryCard({
       // setHasOverflow(element.scrollHeight > element.clientHeight);
     }
   }, [content]);
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,7 +65,6 @@ export default function StoryCard({
 
   const handleImageClick = (e: React.MouseEvent) => {
     if (images.length <= 1) {
-      setIsDetailOpen(true);
       return;
     }
 
@@ -64,23 +79,66 @@ export default function StoryCard({
     }
   };
 
+  const handlePairing = () => {
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
+
   return (
     <>
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-gray-800/70 transition-colors">
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
-              <span className="text-sm font-medium">{author[0]}</span>
+            <div 
+              className="relative"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
+                <span className="text-sm font-medium">{author[0]}</span>
+              </div>
+              
+              {/* 더보기 메뉴 */}
+              {isMenuOpen && (
+                <div 
+                  ref={menuRef}
+                  className="absolute top-10 left-0 w-48 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-700 py-2 z-50"
+                >
+                  <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-700">
+                    {author}
+                  </div>
+                  <button className="w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span>프로필 보기</span>
+                  </button>
+                  <button className="w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 flex items-center gap-2">
+                    <Flag className="w-4 h-4" />
+                    <span>신고하기</span>
+                  </button>
+                  <button className="w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span>차단하기</span>
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <div className="font-medium">{author}</div>
               <div className="text-xs text-gray-400">{timeAgo}</div>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-full bg-gray-800 text-sm text-gray-300">
-            {category}
-          </span>
+          <button 
+            onClick={handlePairing}
+            className="flex cursor-pointer items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+          >
+            <Logo size="sm" />
+            <span className="text-sm">페어링</span>
+          </button>
         </div>
 
         {/* 이미지 */}
@@ -165,6 +223,32 @@ export default function StoryCard({
         </div>
       </div>
 
+      {/* 토스트 메시지 */}
+      {showToast && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="relative">
+            {/* 배경 그라데이션 애니메이션 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg blur-xl opacity-50 animate-gradient-x"></div>
+            
+            {/* 메시지 컨테이너 */}
+            <div className="relative bg-gray-800/90 backdrop-blur-sm text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-bounce-in">
+              <div className="animate-spin-slow">
+                <Logo size="sm" />
+              </div>
+              <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                페어링 요청이 완료되었습니다.
+              </span>
+              <button 
+                onClick={() => setShowToast(false)}
+                className="p-1 hover:bg-gray-700/50 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 상세 모달 */}
       <StoryDetailModal
         isOpen={isDetailOpen}
@@ -181,6 +265,39 @@ export default function StoryCard({
           currentImageIndex,
         }}
       />
+
+      <style jsx global>{`
+        @keyframes gradient-x {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes bounce-in {
+          0% { transform: scale(0.3); opacity: 0; }
+          50% { transform: scale(1.05); opacity: 1; }
+          70% { transform: scale(0.9); }
+          100% { transform: scale(1); }
+        }
+        
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        .animate-gradient-x {
+          animation: gradient-x 3s ease infinite;
+          background-size: 200% 200%;
+        }
+        
+        .animate-bounce-in {
+          animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
+        }
+      `}</style>
     </>
   );
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Heart, MessageCircle, Bookmark, Share2, Send } from "lucide-react";
+import { X, Heart, MessageCircle, Bookmark, Share2, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import CommentList from "./CommentList";
 
@@ -15,7 +15,8 @@ interface StoryDetailModalProps {
     likes: number;
     comments: number;
     category: string;
-    imageUrl: string;
+    images: string[];
+    currentImageIndex: number;
   };
 }
 
@@ -23,6 +24,7 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [comment, setComment] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [comments, setComments] = useState([
     {
       id: 1,
@@ -50,13 +52,22 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setCurrentImageIndex(story.currentImageIndex);
     } else {
       document.body.style.overflow = 'unset';
     }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, story.currentImageIndex]);
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? story.images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === story.images.length - 1 ? 0 : prev + 1));
+  };
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,12 +110,47 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
         <div className="flex-1 p-4">
           <div className="max-w-2xl mx-auto">
             {/* 이미지 */}
-            <div className="aspect-square rounded-xl overflow-hidden mb-4 relative">
+            <div className="relative aspect-square rounded-xl overflow-hidden mb-4">
               <img
-                src={story.imageUrl}
+                src={story.images[currentImageIndex]}
                 alt={story.title}
                 className="w-full h-full object-cover"
               />
+              
+              {/* 이미지 인디케이터 */}
+              {story.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  {story.images.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        index === currentImageIndex
+                          ? "bg-white w-2.5"
+                          : "bg-white/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* 이미지 네비게이션 버튼 */}
+              {story.images.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
               <div className="absolute bottom-4 left-4">
                 <span className="px-3 py-1 rounded-full bg-gray-900/80 backdrop-blur-sm text-sm text-gray-300">
                   {story.category}

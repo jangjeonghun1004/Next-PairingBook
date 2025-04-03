@@ -14,6 +14,12 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 
+interface ImageFile {
+  file: File;
+  previewUrl: string;
+  id: string;
+}
+
 const categories = [
   { id: "novel", name: "소설", icon: BookOpen },
   { id: "essay", name: "에세이", icon: PenLine },
@@ -27,12 +33,12 @@ export default function NewStoryPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageFile[]>([]);
   const [errors, setErrors] = useState<{
     category?: string;
     title?: string;
     content?: string;
+    images?: string;
   }>({});
 
   const validateForm = () => {
@@ -47,28 +53,53 @@ export default function NewStoryPage() {
     if (!content.trim()) {
       newErrors.content = "내용을 입력해주세요";
     }
+    if (images.length === 0) {
+      newErrors.images = "최소 1개의 이미지를 추가해주세요";
+    }
+    if (images.length > 5) {
+      newErrors.images = "최대 5개의 이미지만 추가할 수 있습니다";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length + images.length > 5) {
+      setErrors({ ...errors, images: "최대 5개의 이미지만 추가할 수 있습니다" });
+      return;
     }
+
+    const newImages = files.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      id: Math.random().toString(36).substring(7)
+    }));
+
+    setImages(prev => [...prev, ...newImages]);
+    if (errors.images) {
+      setErrors({ ...errors, images: undefined });
+    }
+  };
+
+  const removeImage = (id: string) => {
+    setImages(prev => {
+      const filtered = prev.filter(img => img.id !== id);
+      // 이미지가 모두 삭제되면 에러 표시
+      if (filtered.length === 0) {
+        setErrors(prev => ({ ...prev, images: "최소 1개의 이미지를 추가해주세요" }));
+      }
+      return filtered;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       // TODO: API 연동
-      console.log({ title, content, category, image });
+      console.log({ title, content, category, images });
     }
   };
 
@@ -159,52 +190,61 @@ export default function NewStoryPage() {
           {/* 이미지 업로드 */}
           <div>
             <label className="block text-sm font-medium mb-2">이미지</label>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="relative group">
-                <label className="flex items-center justify-center w-40 h-40 rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 transition-all duration-300 border-2 border-dashed border-gray-700 hover:border-indigo-500">
-                  {previewUrl ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={previewUrl}
-                        alt="미리보기"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImage(null);
-                            setPreviewUrl(null);
-                          }}
-                          className="p-2 rounded-full bg-gray-900/80 hover:bg-gray-800"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-indigo-500" />
-                      </div>
-                      <span className="text-sm text-gray-400">이미지 추가</span>
-                    </div>
-                  )}
+            <div className="space-y-4">
+              {/* 이미지 그리드 */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {/* 이미지 추가 버튼 */}
+                <label className={`relative flex items-center justify-center w-full aspect-[4/3] rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 transition-all duration-300 border-2 border-dashed ${errors.images ? 'border-red-500' : 'border-gray-700 hover:border-indigo-500'}`}>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
+                    multiple
                     className="hidden"
                   />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
+                      <Plus className="w-6 h-6 text-indigo-500" />
+                    </div>
+                    <span className="text-sm text-gray-400">이미지 추가</span>
+                    <span className="text-xs text-gray-500">{images.length}/5</span>
+                  </div>
                 </label>
+
+                {/* 이미지 미리보기 */}
+                {images.map((image) => (
+                  <div key={image.id} className="relative group aspect-[4/3]">
+                    <img
+                      src={image.previewUrl}
+                      alt="미리보기"
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeImage(image.id)}
+                        className="p-2 rounded-full bg-gray-900/80 hover:bg-gray-800"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-400 mb-2">
-                  • 최대 5MB의 이미지를 업로드할 수 있습니다.
-                </p>
-                <p className="text-sm text-gray-400">
-                  • 권장 이미지 크기: 1200x800px
-                </p>
+
+              {/* 에러 메시지 */}
+              {errors.images && (
+                <div className="flex items-center gap-1 text-red-500 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.images}</span>
+                </div>
+              )}
+
+              {/* 이미지 가이드라인 */}
+              <div className="text-sm text-gray-400 space-y-1">
+                <p>• 최대 5개의 이미지를 업로드할 수 있습니다.</p>
+                <p>• 각 이미지는 최대 5MB까지 허용됩니다.</p>
+                <p>• 권장 이미지 크기: 1200x800px</p>
               </div>
             </div>
           </div>

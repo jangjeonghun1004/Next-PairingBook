@@ -5,72 +5,95 @@ import { useState } from "react";
 import Link from "next/link";
 import SearchModal from "./SearchModal";
 
-export default function HamburgerMenu() {
-  const [isOpen, setIsOpen] = useState(false);
+interface HamburgerMenuProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}
+
+export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-gray-800/80 backdrop-blur-sm"
+        onClick={() => onOpenChange(!isOpen)}
+        className="md:hidden fixed right-4 top-4 p-2 rounded-lg bg-gray-800/80 backdrop-blur-sm z-50 hover:bg-gray-700 transition-colors"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
       </button>
 
       {/* 모바일 메뉴 */}
-      <div
-        className={`fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-40 transition-transform duration-300 md:hidden ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+      <div 
+        className={`md:hidden fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-40 transition-all duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex flex-col items-center gap-8 p-8">
+        <div className="flex flex-col h-full pt-20 pb-8 px-6">
           {/* 로고 */}
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
-            P
+          <div className="flex items-center gap-2 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <span className="text-xl font-bold text-white">P</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                페어링
+              </span>
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                BOOK
+              </span>
+            </div>
           </div>
 
           {/* 네비게이션 */}
-          <nav className="flex flex-col items-center gap-8 w-full">
+          <nav className="flex flex-col gap-2">
             <Link
               href="/"
-              className="flex items-center gap-4 text-gray-300 hover:text-white transition-colors w-full p-4 rounded-lg hover:bg-gray-800"
-              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
+              onClick={() => onOpenChange(false)}
             >
               <Home className="w-6 h-6" />
-              <span className="text-lg">홈</span>
+              <span className="text-base font-medium">홈</span>
             </Link>
             <Link
               href="/stories"
-              className="flex items-center gap-4 text-white w-full p-4 rounded-lg bg-gray-800"
-              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-4 p-4 rounded-xl text-white bg-gray-800/50 transition-all"
+              onClick={() => onOpenChange(false)}
             >
               <BookOpen className="w-6 h-6" />
-              <span className="text-lg">이야기</span>
+              <span className="text-base font-medium">이야기</span>
             </Link>
             <button
-              className="flex items-center gap-4 text-gray-300 hover:text-white transition-colors w-full p-4 rounded-lg hover:bg-gray-800"
               onClick={() => {
-                setIsOpen(false);
+                onOpenChange(false);
                 setIsSearchOpen(true);
               }}
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all text-left"
             >
               <Search className="w-6 h-6" />
-              <span className="text-lg">검색</span>
+              <span className="text-base font-medium">검색</span>
             </button>
-            <button className="flex items-center gap-4 text-gray-300 hover:text-white transition-colors w-full p-4 rounded-lg hover:bg-gray-800">
+            <button
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all text-left"
+              onClick={() => onOpenChange(false)}
+            >
               <Bookmark className="w-6 h-6" />
-              <span className="text-lg">저장</span>
+              <span className="text-base font-medium">저장</span>
             </button>
           </nav>
 
-          {/* 프로필 */}
+          {/* 프로필 섹션 */}
           <div className="mt-auto">
-            <button className="flex items-center gap-4 text-gray-300 hover:text-white transition-colors w-full p-4 rounded-lg hover:bg-gray-800">
+            <button
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all w-full"
+              onClick={() => onOpenChange(false)}
+            >
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
                 <User className="w-5 h-5" />
               </div>
-              <span className="text-lg">프로필</span>
+              <div className="flex flex-col items-start">
+                <span className="text-base font-medium">프로필</span>
+                <span className="text-sm text-gray-400">로그인이 필요합니다</span>
+              </div>
             </button>
           </div>
         </div>

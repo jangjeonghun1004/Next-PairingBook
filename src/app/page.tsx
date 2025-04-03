@@ -1,4 +1,4 @@
-import Logo from "@/components/Logo";
+// import Logo from "@/components/Logo";
 import { ArrowRight } from "lucide-react";
 
 export default function Home() {

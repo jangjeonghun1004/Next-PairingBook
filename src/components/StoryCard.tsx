@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import StoryDetailModal from "./StoryDetailModal";
 
@@ -27,13 +27,13 @@ export default function StoryCard({
 }: StoryCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hasOverflow, setHasOverflow] = useState(false);
+  // const [hasOverflow, setHasOverflow] = useState(false);
   const contentRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
-      const element = contentRef.current;
-      setHasOverflow(element.scrollHeight > element.clientHeight);
+      // const element = contentRef.current;
+      // setHasOverflow(element.scrollHeight > element.clientHeight);
     }
   }, [content]);
 

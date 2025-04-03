@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white relative">
+    <div className="min-h-screen bg-gray-900 text-white">
       {/* 상단 헤더 */}
       {/* <header className="fixed top-0 left-0 right-0 h-16 md:h-20 flex items-center justify-between px-4 md:px-6 bg-transparent z-10">
         <div className="flex items-center gap-2 md:gap-4">

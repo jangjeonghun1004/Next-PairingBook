@@ -1,11 +1,11 @@
-// import Logo from "@/components/Logo";
+import Logo from "@/components/Logo";
 import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* 상단 헤더 */}
-      {/* <header className="fixed top-0 left-0 right-0 h-16 md:h-20 flex items-center justify-between px-4 md:px-6 bg-transparent z-10">
+      <header className="absolute top-0 left-0 right-0 h-16 md:h-20 flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2 md:gap-4">
           <Logo width={32} height={32} className="md:w-10 md:h-10" strokeColor="#fff" />
           <div className="flex items-baseline gap-1 md:gap-2">
@@ -25,9 +25,9 @@ export default function Home() {
           <ArrowRight className="w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 group-hover:translate-x-1" />
           <span className="absolute w-0 h-px bg-gradient-to-r from-indigo-400 to-purple-500 bottom-0 left-0 group-hover:w-full transition-all duration-300"></span>
         </a>
-      </header> */}
+      </header>
 
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center px-4 pt-16 md:pt-20">
         <div className="flex w-full max-w-6xl gap-8">
           {/* 좌측 섹션 - 모바일에서는 숨김 */}
           <div className="hidden md:block w-1/2 flex items-center justify-center">

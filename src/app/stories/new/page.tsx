@@ -1,6 +1,7 @@
 'use client';
 import { 
   ArrowLeft, 
+  Image as ImageIcon, 
   X, 
   Plus,
   BookOpen,

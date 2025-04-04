@@ -1,7 +1,7 @@
 'use client';
 
 import { Bookmark, BookOpen, Home, Menu, Search, User, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import SearchModal from "./SearchModal";
 
@@ -13,24 +13,31 @@ interface HamburgerMenuProps {
 export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // 메뉴가 열릴 때 body 스크롤 방지
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    // 컴포넌트가 언마운트될 때 스크롤 복원
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
   return (
     <>
-      <button
-        onClick={() => onOpenChange(!isOpen)}
-        className="md:hidden fixed right-4 top-4 p-2 rounded-lg bg-gray-800/80 backdrop-blur-sm z-50 hover:bg-gray-700 transition-colors"
-      >
-        {isOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
-      </button>
-
       {/* 모바일 메뉴 */}
       <div 
         className={`md:hidden fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-40 transition-all duration-300 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex flex-col h-full pt-20 pb-8 px-6">
+        <div className="flex flex-col h-full pt-20 pb-8 px-6 overflow-y-auto">
           {/* 로고 */}
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-8 mt-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <span className="text-xl font-bold text-white">P</span>
             </div>

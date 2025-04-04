@@ -31,7 +31,7 @@ export default function Home() {
         <div className="flex w-full max-w-6xl gap-8 px-4">
           {/* 좌측 섹션 - 모바일에서는 숨김 */}
           <div className="hidden md:block w-1/2 flex items-center justify-center">
-            <div className="text-center max-w-2xl px-8">
+            <div className="text-center max-w-2xl px-7">
               <div className="mb-8 md:mb-12">
                 <h1 className="text-4xl md:text-6xl font-bold mb-6 md:mb-8 bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                   당신의 독서 경험을<br />

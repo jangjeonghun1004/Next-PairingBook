@@ -20,19 +20,27 @@ interface Story {
   images: string[];
 }
 
-// 더미 데이터 생성 함수
+// 팔로우한 친구 타입 정의
+interface FollowedFriend {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
+
+// 더미 데이터 생성 함수 - 팔로우한 친구들의 스토리
 const generateDummyStories = (page: number): Story[] => {
   // 최대 5페이지(30개 스토리)까지만 생성
   if (page >= 5) return [];
-  
-  
+
+
   return Array.from({ length: 6 }, (_, i) => {
     const id = page * 6 + i;
     const imageCount = (id % 3) + 1; // 1~3개의 이미지로 고정
-    
+
     return {
       id,
-      author: `작성자 ${id}`,
+      author: `팔로우한 친구 ${id % 10}`, // 10명의 친구로 제한
       timeAgo: "방금 전",
       title: `독서 이야기 ${id}`,
       content: "이 책을 읽으면서 느낀 점은... 이 책을 읽으면서 느낀 점은... 이 책을 읽으면서 느낀 점은...",
@@ -47,10 +55,21 @@ const generateDummyStories = (page: number): Story[] => {
   });
 };
 
-export default function StoriesPage() {
+// 팔로우한 친구 더미 데이터 생성
+const generateFollowedFriends = (): FollowedFriend[] => {
+  return Array.from({ length: 10 }, (_, i) => ({
+    id: i,
+    name: `친구 ${i}`,
+    avatar: `https://i.pravatar.cc/150?img=${i + 10}`, // 다양한 아바타 이미지
+    isOnline: Math.random() > 0.3, // 70% 확률로 온라인
+  }));
+};
+
+export default function MyHomePage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [stories, setStories] = useState<Story[]>([]);
+  const [followedFriends, setFollowedFriends] = useState<FollowedFriend[]>([]);
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -62,31 +81,32 @@ export default function StoriesPage() {
   useEffect(() => {
     setIsClient(true);
     setStories(generateDummyStories(0));
+    setFollowedFriends(generateFollowedFriends());
   }, []);
 
   const loadMoreStories = async () => {
     if (isLoading || !hasMore) return;
-    
+
     setIsLoading(true);
     // 실제 API 호출을 시뮬레이션하기 위한 지연
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const nextPage = page + 1;
     const newStories = generateDummyStories(nextPage);
-    
+
     if (newStories.length === 0) {
       setHasMore(false);
     } else {
       setStories(prev => [...prev, ...newStories]);
       setPage(nextPage);
     }
-    
+
     setIsLoading(false);
   };
 
   useEffect(() => {
     if (!isClient) return;
-    
+
     const options = {
       root: null,
       rootMargin: '20px',
@@ -130,20 +150,53 @@ export default function StoriesPage() {
 
       <div className="min-h-screen flex flex-col items-center px-4 md:pl-24 pb-8">
         <div className="w-full max-w-6xl pt-16 md:pt-8">
+          {/* 팔로우한 친구 프로필 아이콘 */}
+          <div className="mb-8">
+            <div className="flex items-baseline gap-1 mb-8">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                팔로우한
+              </span>
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                친구들
+              </span>
+            </div>
+            <div className="flex overflow-x-auto pb-4 gap-4 scrollbar-hide">
+              {followedFriends.map((friend) => (
+                <div key={friend.id} className="flex flex-col items-center gap-2 shrink-0">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-500">
+                      <img
+                        src={friend.avatar}
+                        alt={friend.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {friend.isOnline && (
+                      <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-gray-900"></div>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium">{friend.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* 이야기 목록 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="flex flex-col gap-6">
             {isClient && stories.map((story) => (
-              <StoryCard
-                key={story.id}
-                author={story.author}
-                timeAgo={story.timeAgo}
-                title={story.title}
-                content={story.content}
-                likes={story.likes}
-                comments={story.comments}
-                category={story.category}
-                images={story.images}
-              />
+              <div key={story.id} className="w-full max-w-2xl mx-auto">
+                <StoryCard
+                  author={story.author}
+                  timeAgo={story.timeAgo}
+                  title={story.title}
+                  content={story.content}
+                  likes={story.likes}
+                  comments={story.comments}
+                  category={story.category}
+                  images={story.images}
+                  hideFollowButton={true}
+                />
+              </div>
             ))}
           </div>
 

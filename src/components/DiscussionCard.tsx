@@ -1,45 +1,47 @@
 'use client';
 
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight, User, Flag, Shield, X, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, ArrowRight, User, Flag, Shield, X, MoreHorizontal, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import StoryDetailModal from "./StoryDetailModal";
+import { useRouter } from "next/navigation";
 import Logo from "./Logo";
 
-interface StoryCardProps {
-  author: string;
-  timeAgo: string;
+interface DiscussionCardProps {
+  id: number;
   title: string;
   content: string;
+  author: string;
+  bookTitle: string;
+  bookAuthor: string;
+  timeAgo: string;
   likes: number;
   comments: number;
-  category: string;
-  images: string[];
-  hideFollowButton?: boolean;
+  tags: string[];
+  images?: string[];
 }
 
-export default function StoryCard({
-  author,
-  timeAgo,
+export default function DiscussionCard({
+  id,
   title,
   content,
+  author,
+  bookTitle,
+  bookAuthor,
+  timeAgo,
   likes,
   comments,
-  category,
-  images,
-  hideFollowButton = false,
-}: StoryCardProps) {
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  tags,
+  images = [],
+}: DiscussionCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
-  // const [hasOverflow, setHasOverflow] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (contentRef.current) {
-      // const element = contentRef.current;
-      // setHasOverflow(element.scrollHeight > element.clientHeight);
+      // 내용이 넘칠 경우 처리
     }
   }, [content]);
 
@@ -88,9 +90,16 @@ export default function StoryCard({
     }, 3000);
   };
 
+  const handleCardClick = () => {
+    router.push(`/discussions/${id}`);
+  };
+
   return (
     <>
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-gray-800/70 transition-colors">
+      <div 
+        className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-gray-800/70 transition-colors"
+        onClick={handleCardClick}
+      >
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
@@ -100,14 +109,15 @@ export default function StoryCard({
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <div className="font-medium">{author}</div>
-                {!hideFollowButton && (
-                  <button 
-                    onClick={handlePairing}
-                    className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-                  >
-                    팔로우
-                  </button>
-                )}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePairing();
+                  }}
+                  className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                >
+                  팔로우
+                </button>
               </div>
             </div>
           </div>
@@ -149,73 +159,124 @@ export default function StoryCard({
           </div>
         </div>
 
-        {/* 이미지 */}
-        <div 
-          className="relative aspect-square cursor-pointer" 
-          onClick={handleImageClick}
-        >
-          <img
-            src={images[currentImageIndex]}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
-          
-          {/* 이미지 인디케이터 */}
-          {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-              {images.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    index === currentImageIndex
-                      ? "bg-white w-2.5"
-                      : "bg-white/50"
-                  }`}
-                />
-              ))}
+        {/* 이미지 또는 책 정보 */}
+        {images.length > 0 ? (
+          <div 
+            className="relative aspect-square cursor-pointer" 
+            onClick={handleImageClick}
+          >
+            <img
+              src={images[currentImageIndex]}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* 이미지 인디케이터 */}
+            {images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                {images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      index === currentImageIndex
+                        ? "bg-white w-2.5"
+                        : "bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 이미지 네비게이션 버튼 */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            {/* 클릭 영역 가이드 (선택사항) */}
+            {images.length > 1 && (
+              <>
+                <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </>
+            )}
+
+            {/* 책 정보 오버레이 */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+              <div className="flex flex-col">
+                <span className="font-medium text-white">{bookTitle}</span>
+                <span className="text-sm text-gray-300">{bookAuthor}</span>
+              </div>
             </div>
-          )}
-
-          {/* 이미지 네비게이션 버튼 */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={handlePrevImage}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleNextImage}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </>
-          )}
-
-          {/* 클릭 영역 가이드 (선택사항) */}
-          {images.length > 1 && (
-            <>
-              <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            </>
-          )}
-        </div>
+            
+            {/* 태그 */}
+            {tags.length > 0 && (
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span key={index} className="text-xs px-2 py-1 rounded-full bg-indigo-500/30 text-white backdrop-blur-sm">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative aspect-square cursor-pointer">
+            <div className="w-full h-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            
+            {/* 책 정보 오버레이 */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+              <div className="flex flex-col">
+                <span className="font-medium text-white">{bookTitle}</span>
+                <span className="text-sm text-gray-300">{bookAuthor}</span>
+              </div>
+            </div>
+            
+            {/* 태그 */}
+            {tags.length > 0 && (
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span key={index} className="text-xs px-2 py-1 rounded-full bg-indigo-500/30 text-white backdrop-blur-sm">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 푸터 */}
         <div className="p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-medium line-clamp-1 flex-1">{title}</h3>
             <button
-              onClick={() => setIsDetailOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/discussions/${id}`);
+              }}
               className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-0.5 group shrink-0 ml-2"
             >
               <span>더보기</span>
               <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
-          <p className="text-sm text-gray-300 line-clamp-2 mb-4">
+          <p ref={contentRef} className="text-sm text-gray-300 line-clamp-2 mb-4">
             {content}
           </p>
           <div className="flex items-center gap-4 text-gray-400">
@@ -228,7 +289,6 @@ export default function StoryCard({
               <span className="text-sm">{comments}</span>
             </div>
             <div className="text-xs text-gray-400">{timeAgo}</div>
-
           </div>
         </div>
       </div>
@@ -246,7 +306,7 @@ export default function StoryCard({
                 <Logo size="sm" />
               </div>
               <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                페어링 요청이 완료되었습니다.
+                팔로우 요청이 완료되었습니다.
               </span>
               <button 
                 onClick={() => setShowToast(false)}
@@ -258,23 +318,6 @@ export default function StoryCard({
           </div>
         </div>
       )}
-
-      {/* 상세 모달 */}
-      <StoryDetailModal
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        story={{
-          author,
-          timeAgo,
-          title,
-          content,
-          likes,
-          comments,
-          category,
-          images,
-          currentImageIndex,
-        }}
-      />
 
       <style jsx global>{`
         @keyframes gradient-x {

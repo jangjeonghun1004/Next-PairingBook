@@ -1,6 +1,6 @@
 'use client';
 
-import { Bookmark, BookOpen, Home, Menu, Search, User, X } from "lucide-react";
+import { Bookmark, BookOpen, Home, Search, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import SearchModal from "./SearchModal";
@@ -54,7 +54,7 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
           {/* 네비게이션 */}
           <nav className="flex flex-col gap-2">
             <Link
-              href="/"
+              href="/myhome"
               className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
               onClick={() => onOpenChange(false)}
             >
@@ -63,7 +63,7 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
             </Link>
             <Link
               href="/stories"
-              className="flex items-center gap-4 p-4 rounded-xl text-white bg-gray-800/50 transition-all"
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
               onClick={() => onOpenChange(false)}
             >
               <BookOpen className="w-6 h-6" />
@@ -98,8 +98,8 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
                 <User className="w-5 h-5" />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-base font-medium">프로필</span>
-                <span className="text-sm text-gray-400">로그인이 필요합니다</span>
+                <span className="text-base font-medium">내 프로필</span>
+                <span className="text-sm text-gray-400">프로필 관리</span>
               </div>
             </button>
           </div>

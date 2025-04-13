@@ -6,7 +6,9 @@ import StoryDetailModal from "./StoryDetailModal";
 import Logo from "./Logo";
 
 interface StoryCardProps {
+  id: string;
   author: string;
+  authorId: string;
   timeAgo: string;
   title: string;
   content: string;
@@ -18,7 +20,9 @@ interface StoryCardProps {
 }
 
 export default function StoryCard({
+  id,
   author,
+  authorId,
   timeAgo,
   title,
   content,
@@ -32,9 +36,37 @@ export default function StoryCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
   // const [hasOverflow, setHasOverflow] = useState(false);
+
+  // 초기 팔로우 상태 확인
+  useEffect(() => {
+    if (!hideFollowButton && authorId) {
+      checkFollowStatus();
+    }
+  }, [hideFollowButton, authorId]);
+
+  // 팔로우 상태 확인 함수
+  const checkFollowStatus = async () => {
+    try {
+      const response = await fetch(`/api/users/follow?followingId=${authorId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+      }
+    } catch (error) {
+      console.error('팔로우 상태 확인 중 오류 발생:', error);
+    }
+  };
 
   useEffect(() => {
     if (contentRef.current) {
@@ -81,11 +113,35 @@ export default function StoryCard({
     }
   };
 
-  const handlePairing = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
+  // 팔로우/언팔로우 토글 함수
+  const handleFollowToggle = async () => {
+    if (!authorId) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/users/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ followingId: authorId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+        
+        // 팔로우/언팔로우 성공 메시지 표시
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('팔로우 상태 변경 중 오류 발생:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -102,10 +158,15 @@ export default function StoryCard({
                 <div className="font-medium">{author}</div>
                 {!hideFollowButton && (
                   <button 
-                    onClick={handlePairing}
-                    className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                    onClick={handleFollowToggle}
+                    disabled={isLoading}
+                    className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
+                      isFollowing 
+                        ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' 
+                        : 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20'
+                    }`}
                   >
-                    팔로우
+                    {isLoading ? '로딩 중...' : isFollowing ? '팔로잉' : '팔로우'}
                   </button>
                 )}
               </div>
@@ -246,7 +307,7 @@ export default function StoryCard({
                 <Logo size="sm" />
               </div>
               <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                페어링 요청이 완료되었습니다.
+                {isFollowing ? '팔로우 되었습니다.' : '팔로우가 취소되었습니다.'}
               </span>
               <button 
                 onClick={() => setShowToast(false)}
@@ -264,6 +325,7 @@ export default function StoryCard({
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         story={{
+          id,
           author,
           timeAgo,
           title,

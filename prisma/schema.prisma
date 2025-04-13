@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String                  @id @default(cuid())
+  name           String?
+  email          String                  @unique
+  emailVerified  DateTime?
+  password       String
+  image          String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  accounts       Account[]
+  comments       Comment[]
+  discussions    Discussion[]
+  participations DiscussionParticipant[]
+  sessions       Session[]
+  stories        Story[]
+  followers      UserFollow[]            @relation("follower")
+  following      UserFollow[]            @relation("following")
+  userLikes      UserLike[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Story {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  content      String
+  category     String
+  image_urls   String[]
+  likes        Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  authorId     String     @map("author_id")
+  commentCount Int        @default(0) @map("comment_count")
+  comments     Comment[]
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  userLikes    UserLike[]
+
+  @@index([authorId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model UserLike {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+}
+
+model Comment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id") @db.Uuid
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storyId])
+  @@index([createdAt])
+}
+
+model Discussion {
+  id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  content         String
+  bookTitle       String                  @map("book_title")
+  bookAuthor      String                  @map("book_author")
+  tags            String[]
+  imageUrls       String[]                @map("image_urls")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+  authorId        String                  @map("author_id")
+  maxParticipants Int?                    @default(10) @map("max_participants")
+  scheduledAt     DateTime?               @map("scheduled_at")
+  privacy         String
+  topics          String[]
+  author          User                    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  participants    DiscussionParticipant[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model DiscussionParticipant {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status       String     @default("pending")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  userId       String     @map("user_id")
+  discussionId String     @map("discussion_id") @db.Uuid
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, discussionId])
+  @@index([userId])
+  @@index([discussionId])
+  @@index([status])
+}
+
+model UserFollow {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}

@@ -3,6 +3,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+  
+  /* 스크롤바 커스텀 색상 변수 */
+  --scrollbar-track: rgba(31, 41, 55, 0.2);
+  --scrollbar-thumb: rgba(99, 102, 241, 0.5);
+  --scrollbar-thumb-hover: rgba(99, 102, 241, 0.7);
+  
+  /* 스크롤바 너비를 명시적으로 지정 */
+  --scrollbar-width: 8px;
 }
 
 @theme inline {
@@ -16,11 +27,120 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --scrollbar-track: rgba(17, 24, 39, 0.3);
+    --scrollbar-thumb: rgba(99, 102, 241, 0.5);
+    --scrollbar-thumb-hover: rgba(129, 140, 248, 0.7);
   }
+}
+
+/* 스크롤바로 인한 UI 흔들림 방지 */
+html {
+  scrollbar-gutter: stable;
+  -webkit-scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  overflow-y: overlay; /* 레이아웃을 유지하면서 스크롤바 표시 */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  overflow-x: hidden;
+  margin-right: 0 !important; /* 스크롤바로 인한 마진 방지 */
+  width: 100vw;
+  position: relative;
+}
+
+/* 전역 스크롤바 스타일 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 8px;
+  margin: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--scrollbar-thumb), rgba(79, 70, 229, 0.6));
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 모바일 디바이스에서 스크롤 유동적 효과 */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 모바일에서 스크롤바 관련 문제 해결 */
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+/* 텍스트 래핑 유틸리티 */
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* 모달 내 이미지와 텍스트 최대 너비 제한 */
+@media (max-width: 768px) {
+  .modal-content-scroll {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* 스크롤 페이드 효과 유틸리티 클래스 */
+.scroll-fade {
+  position: relative;
+}
+
+.scroll-fade::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, var(--background));
+  pointer-events: none;
+}
+
+/* 컨테이너 내에 스크롤바가 생길 때 레이아웃 유지 */
+.maintain-layout {
+  width: calc(100% + var(--scrollbar-width));
+  margin-right: calc(-1 * var(--scrollbar-width));
+  padding-right: var(--scrollbar-width);
 }

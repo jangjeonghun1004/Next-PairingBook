@@ -39,7 +39,7 @@ export default function CommentList({ comments }: CommentListProps) {
               <span className="text-xs text-gray-400">{comment.timeAgo}</span>
             </div>
             <p className="text-gray-300 mt-1">{comment.content}</p>
-            <button
+            {/* <button
               onClick={() => toggleLike(comment.id)}
               className={`flex items-center gap-1 mt-2 text-sm ${
                 likedComments.includes(comment.id) ? "text-red-500" : "text-gray-400"
@@ -50,7 +50,7 @@ export default function CommentList({ comments }: CommentListProps) {
                 fill={likedComments.includes(comment.id) ? "currentColor" : "none"}
               />
               <span>{comment.likes + (likedComments.includes(comment.id) ? 1 : 0)}</span>
-            </button>
+            </button> */}
           </div>
         </div>
       ))}

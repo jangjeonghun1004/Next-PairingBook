@@ -105,13 +105,13 @@ export default function DiscussionCard({
   return (
     <>
       <div
-        className="w-full h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow rounded-lg overflow-hidden"
+        className="w-full h-full flex flex-col hover:shadow-lg transition-shadow overflow-hidden"
       >
         <div className="flex flex-col md:flex-row h-full">
           {/* 좌측 메타데이터 영역 (토론 정보 섹션) */}
           <div className="w-full md:w-36 md:flex-shrink-0 flex flex-row md:flex-col justify-between gap-2 order-1 md:order-1 mb-2 md:mb-0">
             {/* 토론 정보 섹션 */}
-            <div className="w-full h-auto md:h-full flex flex-row md:flex-col bg-gray-800/70 rounded-lg shadow-md overflow-hidden">
+            <div className="w-full h-auto md:h-full flex flex-row md:flex-col bg-gray-800/70 shadow-md overflow-hidden">
               {/* 토론 예정 날짜 */}
               {scheduledAt && (
                 <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-3 md:h-1/2 md:border-b border-r md:border-r-0 border-gray-700/50">
@@ -154,7 +154,7 @@ export default function DiscussionCard({
           </div>
 
           {/* 콘텐츠 섹션 */}
-          <div className="flex-1 flex flex-col md:pl-8 md:h-full bg-gray-800/50 backdrop-blur-sm overflow-hidden hover:bg-gray-800/70 transition-colors order-2 md:order-2 rounded-lg">
+          <div className="flex-1 flex flex-col md:pl-8 md:h-full bg-gray-800/50 backdrop-blur-sm overflow-hidden transition-colors order-2 md:order-2">
             {/* 헤더 */}
             <div className="flex items-center justify-between p-3 md:p-4 border-b border-gray-700/50">
               <div className="flex items-center gap-2 md:gap-3">

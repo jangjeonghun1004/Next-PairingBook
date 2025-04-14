@@ -2,25 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-    BookOpen,
     ArrowLeft,
     Heart,
     Calendar,
     Users,
     Lock,
     Globe,
-    ChevronLeft,
-    ChevronRight,
     MessageSquare,
     Share2,
     Clock,
-    Eye
+    MapPin,
+    Info,
+    Eye,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import MobileHeader from "@/components/MobileHeader";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import SearchModal from "@/components/SearchModal";
+import TopicModal from "@/components/TopicModal";
+import dynamic from "next/dynamic";
+import Loading from "@/components/Loading";
+
+// KakaoMap 컴포넌트를 dynamic import로 로드 (클라이언트 사이드에서만 렌더링)
+const MapComponent = dynamic(() => import('@/components/MapComponent'), {
+    ssr: false,
+    loading: () => <div className="w-full h-[300px] bg-gray-800 animate-pulse rounded-xl flex items-center justify-center">지도 로딩 중...</div>
+});
 
 // 토론 인터페이스 (Prisma 모델에 맞춤)
 interface Discussion {
@@ -43,6 +52,11 @@ interface Discussion {
         name: string | null;
         image: string | null;
     };
+    location?: {
+        address: string | '인천 주부토로 81번길 23';
+        lat: number;
+        lng: number;
+    } | null;
 }
 
 export default function DiscussionDetailPage() {
@@ -52,14 +66,14 @@ export default function DiscussionDetailPage() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [discussion, setDiscussion] = useState<Discussion | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState("");
-    const [activeSection, setActiveSection] = useState<string>("content");
+    const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
     const [participationStatus, setParticipationStatus] = useState<string | null>(null);
     const [participantsCount, setParticipantsCount] = useState<number>(0);
     const [isJoinLoading, setIsJoinLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'info' | 'topics'>('info');
 
     // 데이터 로드
     useEffect(() => {
@@ -68,11 +82,11 @@ export default function DiscussionDetailPage() {
             try {
                 // API에서 토론 데이터 가져오기
                 const response = await fetch(`/api/discussions/${params.id}`);
-                
+
                 if (!response.ok) {
                     throw new Error('토론을 불러오는데 실패했습니다');
                 }
-                
+
                 const data = await response.json();
                 setDiscussion(data);
 
@@ -86,7 +100,7 @@ export default function DiscussionDetailPage() {
         };
 
         if (params.id) {
-        loadDiscussion();
+            loadDiscussion();
         }
     }, [params.id]);
 
@@ -94,17 +108,17 @@ export default function DiscussionDetailPage() {
     const checkParticipationStatus = async () => {
         try {
             const response = await fetch(`/api/discussions/${params.id}/participants`);
-            
+
             if (!response.ok) {
                 if (response.status !== 401) { // 401은 로그인 필요로 무시
                     console.error('참가 상태 확인 실패');
                 }
                 return;
             }
-            
+
             const data = await response.json();
             setParticipantsCount(data.participantsCount || 0);
-            
+
             if (data.participation) {
                 setParticipationStatus(data.participation.status);
             } else {
@@ -115,28 +129,9 @@ export default function DiscussionDetailPage() {
         }
     };
 
-    // 이미지 네비게이션 함수
-    const goToPreviousImage = () => {
-        const imageCount = discussion?.imageUrls?.length || 0;
-        if (imageCount > 0) {
-            setCurrentImageIndex(prevIndex => 
-                prevIndex === 0 ? imageCount - 1 : prevIndex - 1
-            );
-        }
-    };
-
-    const goToNextImage = () => {
-        const imageCount = discussion?.imageUrls?.length || 0;
-        if (imageCount > 0) {
-            setCurrentImageIndex(prevIndex => 
-                prevIndex === imageCount - 1 ? 0 : prevIndex + 1
-            );
-        }
-    };
-
     // 좋아요 토글 함수
     const toggleLike = () => {
-            setIsLiked(!isLiked);
+        setIsLiked(!isLiked);
         setToastMessage(isLiked ? "좋아요가 취소되었습니다." : "좋아요를 눌렀습니다.");
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
@@ -166,19 +161,19 @@ export default function DiscussionDetailPage() {
     // 참가 신청 함수
     const handleJoinRequest = async () => {
         if (isJoinLoading) return;
-        
+
         try {
             setIsJoinLoading(true);
-            
+
             const response = await fetch(`/api/discussions/${params.id}/participants`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-            
+
             const data = await response.json();
-            
+
             if (!response.ok) {
                 if (response.status === 409) {
                     // 이미 참가 중인 경우
@@ -189,20 +184,20 @@ export default function DiscussionDetailPage() {
             } else {
                 setToastMessage(data.status === 'approved' ? '토론 참가가 승인되었습니다.' : '토론 참가 신청이 완료되었습니다.');
                 setParticipationStatus(data.status);
-                
+
                 // 참가자 수 업데이트
                 if (data.status === 'approved') {
                     setParticipantsCount(prev => prev + 1);
                 }
             }
-            
+
             setShowToast(true);
             setTimeout(() => setShowToast(false), 3000);
         } catch (error) {
             console.error('참가 신청 중 오류:', error);
             setToastMessage('참가 신청 중 오류가 발생했습니다.');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
         } finally {
             setIsJoinLoading(false);
         }
@@ -248,19 +243,19 @@ export default function DiscussionDetailPage() {
                 return {
                     icon: <Lock className="w-5 h-5 text-yellow-400" />,
                     text: "비공개 토론",
-                    description: "초대받은 사용자만 참여할 수 있습니다."
+                    description: "초대된 사용자만 참여할 수 있는 비공개 토론입니다."
                 };
             case 'invitation':
                 return {
                     icon: <Users className="w-5 h-5 text-blue-400" />,
                     text: "초대 토론",
-                    description: "승인 후 참여 가능합니다."
+                    description: "승인된 사용자만 참여할 수 있는 초대 토론입니다."
                 };
             default:
                 return {
-                    icon: <Globe className="w-5 h-5 text-green-400" />,
-                    text: "공개 토론",
-                    description: "누구나 참여할 수 있는 공개 토론입니다."
+                    icon: <Globe className="w-5 h-5 text-gray-400" />,
+                    text: "정보 없음",
+                    description: "토론 정보가 제공되지 않았습니다."
                 };
         }
     };
@@ -268,60 +263,90 @@ export default function DiscussionDetailPage() {
     // 남은 시간 계산
     const getRemainingTimeText = (date: Date | null | string) => {
         if (!date) return "날짜 미정";
-        
-        const targetDate = typeof date === 'string' ? new Date(date) : date;
+
+        const scheduledDate = typeof date === 'string' ? new Date(date) : date;
         const now = new Date();
-        const diffTime = targetDate.getTime() - now.getTime();
-        
-        if (diffTime <= 0) return "토론 진행 중";
-        
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-        
-        if (diffDays > 0) {
-            return `${diffDays}일 ${diffHours}시간 남음`;
-        } else if (diffHours > 0) {
-            return `${diffHours}시간 ${diffMinutes}분 남음`;
+
+        // 과거 날짜면 "종료됨" 표시
+        if (scheduledDate < now) {
+            return "토론 종료됨";
+        }
+
+        const diff = scheduledDate.getTime() - now.getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (days > 0) {
+            return `${days}일 ${hours}시간 남음`;
+        } else if (hours > 0) {
+            return `${hours}시간 ${minutes}분 남음`;
         } else {
-            return `${diffMinutes}분 남음`;
+            return `${minutes}분 남음`;
         }
     };
 
-    // 로딩 중 표시
-    if (isLoading) {
+    const privacyInfo = discussion ? renderPrivacyInfo(discussion.privacy) : renderPrivacyInfo('');
+
+    // 토론 주제 모달 열기
+    const openTopicModal = () => {
+        setIsTopicModalOpen(true);
+        // 기록에 상태 추가하여 뒤로가기 처리 가능하게 함
+        window.history.pushState({ topicModalOpen: true }, '');
+    };
+
+    // 모달 닫기 함수
+    const closeTopicModal = () => {
+        setIsTopicModalOpen(false);
+        // 모달이 닫힐 때 body 스타일 초기화
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+
+        // 스크롤 위치 복원
+        const scrollY = parseInt(document.body.style.top || '0', 10) * -1;
+        window.scrollTo(0, scrollY);
+    };
+
+    // 주제 탭을 클릭했을 때 처리
+    const handleTopicsTabClick = () => {
+        // 토픽이 있으면 모달 열기, 없으면 탭만 활성화
+        if (discussion?.topics && discussion.topics.length > 0) {
+            openTopicModal();
+        } else {
+            setActiveTab('topics');
+        }
+    };
+
+    // 뒤로가기 시 모달 닫기 처리
+    useEffect(() => {
+        const handlePopState = (event: PopStateEvent) => {
+            if (isTopicModalOpen) {
+                closeTopicModal();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [isTopicModalOpen]);
+
+    // 만약 isTopicModalOpen이 true인 상태에서 렌더링된다면
+    if (isTopicModalOpen && discussion?.topics) {
         return (
-            <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce"></div>
-                </div>
-            </div>
+            <TopicModal
+                isOpen={isTopicModalOpen}
+                onClose={closeTopicModal}
+                topics={discussion.topics}
+            />
         );
     }
-
-    // 데이터가 없는 경우
-    if (!discussion) {
-        return (
-            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
-                <p className="text-xl mb-4">토론 발제문을 찾을 수 없습니다.</p>
-                <button
-                    onClick={() => router.push('/discussions')}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                    토론 목록으로 돌아가기
-                </button>
-            </div>
-        );
-    }
-
-    // 프라이버시 정보
-    const privacyInfo = renderPrivacyInfo(discussion.privacy);
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen overflow-x-hidden">
             {/* 모바일 헤더 */}
             <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
@@ -334,255 +359,324 @@ export default function DiscussionDetailPage() {
             {/* 검색 모달 */}
             <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-            {/* 토스트 메시지 */}
+            {/* 토스트 알림 */}
             {showToast && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg">
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 bg-opacity-90 text-white px-4 py-2 rounded-lg shadow-lg">
                     {toastMessage}
                 </div>
             )}
 
             {/* 메인 콘텐츠 */}
-            <main className="md:pl-64 pt-16 pb-20">
-                <div className="max-w-4xl mx-auto px-4 py-8">
-                    {/* 뒤로 가기 버튼 */}
-                        <button
-                        onClick={() => router.push('/discussions')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+            <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+                <div className="w-full max-w-4xl pt-12 md:pt-8">
+                    {/* 헤더 */}
+                    <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
+                        <Link
+                            href="/discussions"
+                            className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                        토론 목록으로 돌아가기
-                    </button>
-
-                    {/* 토론 정보 */}
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl overflow-hidden">
-                        {/* 헤더 섹션 */}
-                        <div className="p-6 border-b border-gray-700">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                                <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-0">{discussion.title}</h1>
-                                <div className="flex items-center gap-2">
-                                    {/* 참가 신청 버튼 */}
-                                    <button
-                                        onClick={handleJoinRequest}
-                                        disabled={isJoinLoading || participationStatus === 'rejected'}
-                                        className={`px-4 py-2 ${getParticipationButtonStyle()} rounded-lg transition-colors flex items-center gap-2 ${isJoinLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                    >
-                                        {isJoinLoading ? (
-                                            <>
-                                                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                                                처리 중...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Users className="w-4 h-4" />
-                                                {getParticipationButtonText()}
-                                            </>
-                                        )}
+                            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="font-medium text-sm sm:text-base">뒤로가기</span>
+                        </Link>
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">토론 상세</h1>
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center justify-center p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
+                            aria-label="공유하기"
+                        >
+                            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
-                        </div>
                     </div>
 
-                        {/* 작성자 정보 */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full overflow-hidden">
-                                    {discussion.author.image ? (
-                                        <img
-                                            src={discussion.author.image}
-                                            alt={discussion.author.name || '작성자'}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <span className="text-lg font-bold">
-                                                {discussion.author.name ? discussion.author.name.charAt(0).toUpperCase() : 'U'}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="font-medium">{discussion.author.name || '익명 사용자'}</p>
-                                    <p className="text-sm text-gray-400">
-                                        {formatDate(discussion.createdAt)}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 책 정보 */}
-                            <div className="flex items-center gap-3 mb-2 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
-                                <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/20 rounded-lg">
-                                    <BookOpen className="w-5 h-5 text-indigo-400" />
-                                        </div>
-                                <div>
-                                    <p className="font-medium">{discussion.bookTitle}</p>
-                                    <p className="text-sm text-gray-400">{discussion.bookAuthor}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 토론 정보 카드 */}
-                        <div className="p-6 bg-gray-800/50">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                {/* 토론 일시 */}
-                                <div className="bg-gray-800 p-4 rounded-lg flex items-start gap-3 border border-gray-700/50 hover:border-indigo-500/50 transition-colors">
-                                    <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/20 rounded-lg">
-                                        <Calendar className="w-5 h-5 text-indigo-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">토론 예정 일시</p>
-                                        <p className="text-sm text-gray-300">{formatDate(discussion.scheduledAt)}</p>
-                                    </div>
-                                </div>
-
-                                {/* 남은 시간 */}
-                                <div className="bg-gray-800 p-4 rounded-lg flex items-start gap-3 border border-gray-700/50 hover:border-indigo-500/50 transition-colors">
-                                    <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/20 rounded-lg">
-                                        <Clock className="w-5 h-5 text-indigo-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">남은 시간</p>
-                                        <p className="text-sm text-gray-300">{getRemainingTimeText(discussion.scheduledAt)}</p>
-                                    </div>
-                                </div>
-
-                                {/* 공개 설정 */}
-                                <div className="bg-gray-800 p-4 rounded-lg flex items-start gap-3 border border-gray-700/50 hover:border-indigo-500/50 transition-colors">
-                                    <div className="w-10 h-10 flex items-center justify-center bg-indigo-500/20 rounded-lg">
-                                    {privacyInfo.icon}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">{privacyInfo.text}</p>
-                                        <p className="text-sm text-gray-300">
-                                            {discussion.maxParticipants 
-                                                ? `${participantsCount}명 참가 중 / 최대 ${discussion.maxParticipants}명` 
-                                                : '인원 제한 없음'}
-                                        </p>
-                                    </div>
-                                    </div>
-                                </div>
-
+                    {isLoading ? (<Loading />) : discussion ? (
+                        <div className="space-y-6 sm:space-y-8 mt-4 sm:mt-6">
                             {/* 탭 네비게이션 */}
-                            <div className="flex border-b border-gray-700 mb-6">
-                                <button
-                                    onClick={() => setActiveSection("content")}
-                                    className={`py-3 px-4 font-medium flex items-center gap-2 border-b-2 transition-colors ${activeSection === 'content' ? 'text-indigo-400 border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'}`}
-                                >
-                                    <Eye className="w-4 h-4" />
-                                    토론 내용
-                                </button>
-                                <button
-                                    onClick={() => setActiveSection("topics")}
-                                    className={`py-3 px-4 font-medium flex items-center gap-2 border-b-2 transition-colors ${activeSection === 'topics' ? 'text-indigo-400 border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'}`}
-                                >
-                                    <MessageSquare className="w-4 h-4" />
-                                    토론 주제
-                                    {discussion.topics?.length > 0 && <span className="bg-indigo-500 text-white text-xs rounded-full px-1.5">{discussion.topics.length}</span>}
-                                </button>
-                        </div>
-
-                            {/* 이미지가 있는 경우 이미지 갤러리 표시 */}
-                            {discussion.imageUrls && discussion.imageUrls.length > 0 && (
-                                <div className="mb-6 relative">
-                                    <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden border border-gray-700/50">
-                                        <img
-                                            src={discussion.imageUrls[currentImageIndex]}
-                                            alt={`토론 이미지 ${currentImageIndex + 1}`}
-                                            className="w-full h-full object-contain"
-                                        />
-                            </div>
-                                    {discussion.imageUrls.length > 1 && (
-                                        <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between px-4">
-                                            <button
-                                                onClick={goToPreviousImage}
-                                                className="w-10 h-10 rounded-full bg-black bg-opacity-50 flex items-center justify-center hover:bg-opacity-70 transition-all"
-                                            >
-                                                <ChevronLeft className="w-6 h-6" />
-                                            </button>
-                                            <button
-                                                onClick={goToNextImage}
-                                                className="w-10 h-10 rounded-full bg-black bg-opacity-50 flex items-center justify-center hover:bg-opacity-70 transition-all"
-                                            >
-                                                <ChevronRight className="w-6 h-6" />
-                                            </button>
-                            </div>
-                                    )}
-                                    <div className="mt-2 text-center text-sm text-gray-400">
-                                        {currentImageIndex + 1} / {discussion.imageUrls.length}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 콘텐츠 섹션 */}
-                            {activeSection === "content" && (
-                                <div className="mb-6 bg-gray-800 rounded-lg p-6 border border-gray-700/50">
-                                    <div className="prose prose-invert max-w-none">
-                                        <p className="whitespace-pre-line">{discussion.content}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 토론 주제 섹션 */}
-                            {activeSection === "topics" && discussion.topics && discussion.topics.length > 0 && (
-                                <div className="mb-6 bg-gray-800 rounded-lg p-6 border border-gray-700/50">
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {discussion.topics.map((topic, index) => (
-                                    <div
-                                        key={index}
-                                                className="p-4 bg-gray-800/80 rounded-lg border border-indigo-500/30 hover:border-indigo-500/50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
-                                                        {index + 1}
-                                                    </div>
-                                                    <h3 className="font-medium text-lg">토론 주제</h3>
-                                                </div>
-                                                <p className="ml-11 text-gray-200">{topic}</p>
-                                    </div>
-                                ))}
-                                    </div>
-                            </div>
-                        )}
-
-                            {/* 태그 목록 */}
-                            {discussion.tags && discussion.tags.length > 0 && (
-                                <div className="mb-6">
-                                    <h2 className="text-md font-medium mb-3 text-gray-300">태그</h2>
-                                    <div className="flex flex-wrap gap-2">
-                                        {discussion.tags.map((tag, index) => (
-                                            <span
-                                                key={index}
-                                                className="px-3 py-1.5 bg-gray-800 text-sm rounded-full border border-gray-700 hover:border-indigo-500/50 transition-colors"
-                                            >
-                                                #{tag}
+                            <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 shadow-lg overflow-hidden">
+                                <div className="flex border-b border-gray-700">
+                                    <button
+                                        onClick={() => setActiveTab('info')}
+                                        className={`py-3 px-4 font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'info' ? 'text-indigo-400 border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'}`}
+                                    >
+                                        <Info className="w-4 h-4" />
+                                        토론 소개
+                                    </button>
+                                    <button
+                                        onClick={handleTopicsTabClick}
+                                        className={`py-3 px-4 cursor-pointer font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'topics' ? 'text-indigo-400 border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'}`}
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                        토론 주제
+                                        {discussion.topics?.length > 0 && (
+                                            <span className="bg-indigo-500 text-white text-xs rounded-full px-2 py-0.5">
+                                                {discussion.topics.length}
                                             </span>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* 토론 제목 및 기본 정보 */}
+                                <div className="p-4 sm:p-6">
+                                    <h1 className="text-xl sm:text-2xl font-bold mb-3">{discussion.title}</h1>
+
+                                    {/* 태그 영역 */}
+                                    {discussion.tags && discussion.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {discussion.tags.map((tag, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-block px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-lg text-sm"
+                                                >
+                                                    #{tag}
+                                                </span>
                                             ))}
                                         </div>
-                            </div>
-                        )}
+                                    )}
 
-                            {/* 액션 버튼 */}
-                            <div className="flex items-center gap-4 pt-4 border-t border-gray-700">
-                                <button
-                                    onClick={toggleLike}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg transition-colors ${
-                                        isLiked
-                                            ? "bg-pink-600 text-white"
-                                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                                        }`}
-                                >
-                                    <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-                                    좋아요
-                                </button>
-                                <button
-                                    onClick={handleShare}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-800 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    <Share2 className="w-5 h-5" />
-                                    공유하기
-                                </button>
+                                    {/* 저자 및 생성일 */}
+                                    {/* <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                                        <div className="flex items-center gap-1.5">
+                                            {discussion.author.image ? (
+                                                <img
+                                                    src={discussion.author.image}
+                                                    alt={discussion.author.name || '익명'}
+                                                    className="w-5 h-5 rounded-full"
+                                                />
+                                            ) : (
+                                                <div className="w-5 h-5 bg-gray-700 rounded-full"></div>
+                                            )}
+                                            <span>{discussion.author.name || '익명'}</span>
+                                        </div>
+                                        <span>•</span>
+                                        <span>{formatDate(discussion.createdAt)}</span>
+                                    </div> */}
+
+                                    {/* 활용 책 정보 */}
+                                    {/* <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                                        <span>도서:</span>
+                                        <span className="font-medium text-gray-300">{discussion.bookTitle}</span>
+                                        <span>•</span>
+                                        <span>{discussion.bookAuthor} 저</span>
+                                    </div> */}
+
+                                    {/* 탭 컨텐츠 */}
+                                    {activeTab === 'info' && (
+                                        <div className="mt-5 prose prose-invert max-w-none">
+                                            <p className="whitespace-pre-wrap text-gray-300">{discussion.content}</p>
+                                        </div>
+                                    )}
+
+                                    {/* 토픽이 없거나 적을 때 빈 상태 */}
+                                    {activeTab === 'topics' && (!discussion.topics || discussion.topics.length === 0) && (
+                                        <div className="mt-5 flex flex-col items-center py-8">
+                                            <MessageSquare className="w-10 h-10 text-gray-500 mb-3" />
+                                            <p className="text-gray-400 text-center">등록된 토론 주제가 없습니다.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 토론 설정 카드 */}
+                            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Calendar className="w-4 h-4 text-indigo-400" />
+                                    <h2 className="text-lg font-medium">토론 설정</h2>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* 예정 날짜 */}
+                                    <div className="flex flex-col">
+                                        <p className="text-sm text-gray-400 mb-1">예정 날짜</p>
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-5 h-5 text-indigo-400" />
+                                            <p className="font-medium">{formatDate(discussion.scheduledAt)}</p>
+                                        </div>
+                                        {discussion.scheduledAt && (
+                                            <div className="mt-1 text-sm text-indigo-400 flex items-center gap-1">
+                                                <span>{getRemainingTimeText(discussion.scheduledAt)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 참가 인원 */}
+                                    <div className="flex flex-col">
+                                        <p className="text-sm text-gray-400 mb-1">참가 인원</p>
+                                        <div className="flex items-center gap-2">
+                                            <Users className="w-5 h-5 text-indigo-400" />
+                                            <p className="font-medium">
+                                                {participantsCount}명 참여 중
+                                                {discussion.maxParticipants && ` (최대 ${discussion.maxParticipants}명)`}
+                                            </p>
+                                        </div>
+                                        {discussion.maxParticipants && (
+                                            <div className="mt-2 w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-indigo-500 rounded-full"
+                                                    style={{
+                                                        width: `${Math.min(100, (participantsCount / discussion.maxParticipants) * 100)}%`
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 공개 설정 */}
+                                    <div className="flex flex-col">
+                                        <div className="flex-1">
+                                            <p className="text-sm text-gray-400 mb-1">공개 설정</p>
+                                            <div className="flex items-center gap-2 p-3 bg-gray-800/70 rounded-lg h-14">
+                                                {privacyInfo.icon}
+                                                <p className="font-medium">{privacyInfo.text}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 참가 신청 */}
+                                    <div className="flex flex-col">
+                                        <div className="flex-1">
+                                            <p className="text-sm text-gray-400 mb-1">참가 신청</p>
+                                            <button
+                                                onClick={handleJoinRequest}
+                                                disabled={isJoinLoading || participationStatus === 'rejected'}
+                                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed h-14 ${getParticipationButtonStyle()}`}
+                                            >
+                                                {isJoinLoading ? (
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                ) : (
+                                                    <Users className="w-5 h-5" />
+                                                )}
+                                                <span>{getParticipationButtonText()}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 위치 정보 카드 */}
+                            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <MapPin className="w-4 h-4 text-indigo-400" />
+                                    <h2 className="text-lg font-medium">모임 장소</h2>
+                                </div>
+
+                                {true ? (
+                                    // <div className="space-y-3">
+                                    //     <p className="font-medium">{discussion.location.address}</p>
+                                    //     <div className="w-full h-[300px] rounded-xl overflow-hidden">
+                                    //         <MapComponent
+                                    //             latitude={discussion.location.lat}
+                                    //             longitude={discussion.location.lng}
+                                    //             address={discussion.location.address || '인천 주부토로 81번길 23'}
+                                    //         />
+                                    //     </div>
+                                    // </div>
+                                    // <div className="space-y-3">
+                                    //     <p className="font-medium">{'discussion.location.address'}</p>
+                                    //     <div className="w-full h-[300px] rounded-xl overflow-hidden">
+                                    //         <MapComponent address={'종로구 혜화로6길 17'} />
+                                    //     </div>
+                                    // </div>
+
+                                    <Link className="text-gray-400" href={'https://map.kakao.com/link/search/종로구 혜화로6길 17 소원책방'} target="_blank">
+                                        <div className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-xl border border-gray-700/50">
+                                            <MapPin className="w-10 h-10 text-gray-500 mb-2" />
+                                            서울 종로구 혜화로6길 17 소원책방
+                                            <p className="text-gray-400">웹 지도 보기</p>
+                                        </div>
+                                    </Link>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-xl border border-gray-700/50">
+                                        <MapPin className="w-10 h-10 text-gray-500 mb-2" />
+                                        <p className="text-gray-400">등록된 모임 장소가 없습니다</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 좋아요 및 댓글 작성 섹션 */}
+                            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <MessageSquare className="w-4 h-4 text-indigo-400" />
+                                    <h2 className="text-lg font-medium">좋아요 & 댓글 작성</h2>
+                                </div>
+
+                                {/* 좋아요 및 통계 */}
+                                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700/50">
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={toggleLike}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${isLiked ? 'text-red-400 bg-red-500/10' : 'text-gray-300 hover:bg-gray-700/50'}`}
+                                        >
+                                            <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-400' : ''}`} />
+                                            <span>좋아요</span>
+                                        </button>
+                                        <div className="text-sm text-gray-400">
+                                            12명이 좋아합니다
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                                        <Eye className="w-4 h-4" />
+                                        <span>142회 조회</span>
+                                    </div>
+                                </div>
+
+                                {/* 댓글 작성 폼 */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-3 border-b border-gray-700/50 pb-3">
+                                        <div className="w-8 h-8 bg-indigo-500/30 rounded-full flex items-center justify-center">
+                                            <Users className="w-4 h-4 text-indigo-300" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="토론에 대한 의견을 작성해주세요..."
+                                            className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-gray-300"
+                                        />
+                                        <button className="text-indigo-500 font-medium hover:text-indigo-400 transition-colors">
+                                            게시
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 댓글 리스트 */}
+                                <div className="space-y-4">
+                                    <h3 className="text-md font-medium text-gray-400 mb-4">최근 댓글</h3>
+
+                                    <div className="flex gap-3 pb-4 border-b border-gray-700/30">
+                                        <div className="w-8 h-8 bg-purple-500/30 rounded-full flex items-center justify-center">
+                                            <span className="text-xs font-medium text-purple-300">김</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-medium">김독서</span>
+                                                <span className="text-xs text-gray-500">2시간 전</span>
+                                            </div>
+                                            <p className="text-gray-300">저도 이 책을 읽었는데, 3장에서 언급된 내용이 특히 인상적이었습니다. 이 토론에서 함께 이야기하고 싶네요!</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 pb-4 border-b border-gray-700/30">
+                                        <div className="w-8 h-8 bg-green-500/30 rounded-full flex items-center justify-center">
+                                            <span className="text-xs font-medium text-green-300">이</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-medium">이북클럽</span>
+                                                <span className="text-xs text-gray-500">1일 전</span>
+                                            </div>
+                                            <p className="text-gray-300">토론 주제가 정말 흥미롭네요. 참가신청했습니다. 함께 이야기 나눌 수 있기를 기대합니다!</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="w-full py-12 text-center">
+                            <p className="text-xl text-gray-400">토론을 찾을 수 없습니다.</p>
+                        </div>
+                    )}
+
+
+
                 </div>
-            </main>
+            </div>
         </div>
     );
 } 

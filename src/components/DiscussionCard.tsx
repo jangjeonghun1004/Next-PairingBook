@@ -170,7 +170,7 @@ export default function DiscussionCard({
                         e.stopPropagation();
                         handlePairing();
                       }}
-                      className="text-xs text-indigo-400 transition-colors"
+                      className="text-xs text-indigo-400 transition-colors cursor-pointer"
                     >
                       팔로우
                     </button>
@@ -185,7 +185,7 @@ export default function DiscussionCard({
                     e.stopPropagation();
                     setIsMenuOpen(!isMenuOpen);
                   }}
-                  className="p-1.5 hover:bg-gray-700/50 rounded-full transition-colors"
+                  className="p-1.5 hover:bg-gray-700/50 rounded-full transition-colors cursor-pointer"
                 >
                   <MoreHorizontal className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                 </button>
@@ -260,7 +260,7 @@ export default function DiscussionCard({
               </div>
               <button
                 onClick={handleJoinDiscussion}
-                className="w-full min-h-[36px] md:min-h-[40px] py-1.5 md:py-2 px-3 md:px-4 bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/40 active:bg-indigo-600/50 rounded-lg transition-colors flex items-center justify-center gap-1.5 touch-manipulation relative overflow-hidden group"
+                className="w-full cursor-pointer min-h-[36px] md:min-h-[40px] py-1.5 md:py-2 px-3 md:px-4 bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/40 active:bg-indigo-600/50 rounded-lg transition-colors flex items-center justify-center gap-1.5 touch-manipulation relative overflow-hidden group"
                 aria-label="토론 참여하기"
               >
                 <span className="relative z-10 text-xs md:text-sm font-medium">토론 참여하기</span>

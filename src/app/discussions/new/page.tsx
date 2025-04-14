@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { 
   BookOpen, 
   Tag, 
@@ -247,7 +248,7 @@ export default function NewDiscussionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen overflow-x-hidden">
       {/* 모바일 헤더 */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
@@ -260,280 +261,300 @@ export default function NewDiscussionPage() {
       {/* 검색 모달 */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      <div className="min-h-screen flex flex-col items-center px-4 md:pl-28 pb-8">
-        <div className="w-full max-w-4xl pt-16 md:pt-8">
+      {/* 메인 콘텐츠 */}
+      <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+        <div className="w-full max-w-4xl pt-12 md:pt-8">
           {/* 헤더 */}
-          <div className="flex items-center gap-4 mb-8">
-            <button
-              onClick={() => router.back()}
-              className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+          <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
+            <Link
+              href="/discussions"
+              className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                토론
-              </span>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                발제문
-              </span>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                작성
-              </span>
-            </div>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-medium text-sm sm:text-base">뒤로가기</span>
+            </Link>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">새 토론</h1>
+            <div className="w-[72px] sm:w-[89px]"></div> {/* 좌우 균형을 맞추기 위한 더미 div */}
           </div>
 
-          {/* 폼 */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            {/* 책 정보 입력 */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                책 정보
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={bookTitle}
-                  onChange={(e) => setBookTitle(e.target.value)}
-                  placeholder="책 제목"
-                  className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <input
-                  type="text"
-                  value={bookAuthor}
-                  onChange={(e) => setBookAuthor(e.target.value)}
-                  placeholder="저자"
-                  className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+          {/* 폼 컨테이너 */}
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 mt-4 sm:mt-6">
+            {error && (
+              <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p>{error}</p>
+              </div>
+            )}
+
+            {/* 책 정보 */}
+            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <BookOpen className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-lg font-medium">책 정보</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="bookTitle" className="block text-sm font-medium mb-2 text-gray-300">
+                    책 제목
+                  </label>
+                  <input
+                    id="bookTitle"
+                    type="text"
+                    value={bookTitle}
+                    onChange={(e) => setBookTitle(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                    placeholder="책 제목을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="bookAuthor" className="block text-sm font-medium mb-2 text-gray-300">
+                    저자
+                  </label>
+                  <input
+                    id="bookAuthor"
+                    type="text"
+                    value={bookAuthor}
+                    onChange={(e) => setBookAuthor(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                    placeholder="저자 이름을 입력하세요"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* 제목 입력 */}
-            <div className="flex flex-col gap-2">
-              <label htmlFor="title" className="text-sm font-medium text-gray-300">
-                토론 제목
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="토론 제목을 입력하세요"
-                className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+            {/* 토론 정보 */}
+            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageSquare className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-lg font-medium">토론 정보</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium mb-2 text-gray-300">
+                    토론 제목
+                  </label>
+                  <input
+                    id="title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                    placeholder="토론 제목을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="content" className="block text-sm font-medium mb-2 text-gray-300">
+                    토론 소개
+                  </label>
+                  <textarea
+                    id="content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="w-full h-32 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner resize-none"
+                    placeholder="토론에 대한 설명을 입력하세요"
+                  />
+                </div>
+
+                {/* 토론 주제 */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                    토론 주제
+                  </label>
+                  <div className="space-y-3">
+                    {topics.map((topic, index) => (
+                      <div key={topic.id} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={topic.value}
+                          onChange={(e) => updateTopicValue(topic.id, e.target.value)}
+                          className="flex-1 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                          placeholder={`토론 주제 ${index + 1}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeTopicField(topic.id)}
+                          className="p-2 rounded-lg bg-gray-800 hover:bg-red-900/30 text-gray-400 hover:text-red-400 transition-colors"
+                          disabled={topics.length <= 1}
+                          title="주제 삭제"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addTopicField}
+                      className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-medium p-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      주제 추가하기
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* 내용 입력 */}
-            <div className="flex flex-col gap-2">
-              <label htmlFor="content" className="text-sm font-medium text-gray-300">
-                토론 내용
-              </label>
-              <textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="토론 내용을 입력하세요"
-                rows={5}
-                className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              />
+            {/* 토론 설정 */}
+            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-lg font-medium">토론 설정</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                  <label htmlFor="scheduledDate" className="block text-sm font-medium mb-2 text-gray-300">
+                    예정 날짜 및 시간
+                  </label>
+                  <input
+                    id="scheduledDate"
+                    type="datetime-local"
+                    value={scheduledDate}
+                    min={getMinDateTime()}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="maxParticipants" className="block text-sm font-medium mb-2 text-gray-300">
+                    최대 참가자 수
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="maxParticipants"
+                      type="number"
+                      min="2"
+                      max="100"
+                      value={maxParticipants}
+                      onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 20)}
+                      className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                    />
+                    <Users className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                    공개 설정
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* 공개 토론 */}
+                    <button
+                      type="button"
+                      onClick={() => setPrivacy("public")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                        privacy === "public" 
+                          ? "border-green-500 bg-green-500/10" 
+                          : "border-gray-700 hover:border-gray-600"
+                      }`}
+                    >
+                      <Globe className={`w-6 h-6 ${privacy === "public" ? "text-green-400" : "text-gray-400"}`} />
+                      <span className="text-sm font-medium">공개 토론</span>
+                      <p className="text-xs text-gray-400 text-center">누구나 참여 가능</p>
+                    </button>
+                    
+                    {/* 비공개 토론 */}
+                    <button
+                      type="button"
+                      onClick={() => setPrivacy("private")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                        privacy === "private" 
+                          ? "border-yellow-500 bg-yellow-500/10" 
+                          : "border-gray-700 hover:border-gray-600"
+                      }`}
+                    >
+                      <Lock className={`w-6 h-6 ${privacy === "private" ? "text-yellow-400" : "text-gray-400"}`} />
+                      <span className="text-sm font-medium">비공개 토론</span>
+                      <p className="text-xs text-gray-400 text-center">초대된 사용자만</p>
+                    </button>
+                    
+                    {/* 초대 토론 */}
+                    <button
+                      type="button"
+                      onClick={() => setPrivacy("invitation")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                        privacy === "invitation" 
+                          ? "border-blue-500 bg-blue-500/10" 
+                          : "border-gray-700 hover:border-gray-600"
+                      }`}
+                    >
+                      <Users className={`w-6 h-6 ${privacy === "invitation" ? "text-blue-400" : "text-gray-400"}`} />
+                      <span className="text-sm font-medium">초대 토론</span>
+                      <p className="text-xs text-gray-400 text-center">승인 후 참여 가능</p>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    토론의 공개 설정을 선택하세요. 참여자 제한을 통해 더 집중된 토론을 진행할 수 있습니다.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* 토론 설정 섹션 (새로 추가) */}
-            <div className="p-4 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl backdrop-blur-sm border border-blue-500/30">
-              <h3 className="text-md font-medium mb-4">토론 설정</h3>
-              
-              {/* 토론 예정 일시 */}
-              <div className="flex flex-col gap-2 mb-4">
-                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  토론 예정 일시
-                </label>
-                <input
-                  type="datetime-local"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  min={getMinDateTime()}
-                  className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  토론이 진행될 일시를 선택하세요. 현재 시간 이후로만 설정할 수 있습니다.
-                </p>
+            {/* 태그 */}
+            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-lg font-medium">태그</h2>
               </div>
-              
-              {/* 최대 참가자 수 */}
-              <div className="flex flex-col gap-2 mb-4">
-                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  최대 참가자 수
-                </label>
-                <input
-                  type="number"
-                  value={maxParticipants}
-                  onChange={(e) => setMaxParticipants(Number(e.target.value))}
-                  min="2"
-                  max="100"
-                  className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  토론에 참여할 수 있는 최대 인원을 설정하세요. 최소 2명 이상이어야 합니다.
-                </p>
-              </div>
-              
-              {/* 공개 설정 */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-300">
-                  공개 설정
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* 공개 토론 */}
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    className="flex-1 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                    placeholder="태그 입력 후 엔터 또는 추가 버튼"
+                  />
                   <button
                     type="button"
-                    onClick={() => setPrivacy("public")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-                      privacy === "public" 
-                        ? "border-green-500 bg-green-500/10" 
-                        : "border-gray-700 hover:border-gray-600"
-                    }`}
+                    onClick={addTag}
+                    className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
                   >
-                    <Globe className={`w-6 h-6 ${privacy === "public" ? "text-green-400" : "text-gray-400"}`} />
-                    <span className="text-sm font-medium">공개 토론</span>
-                    <p className="text-xs text-gray-400 text-center">누구나 참여 가능</p>
-                  </button>
-                  
-                  {/* 비공개 토론 */}
-                  <button
-                    type="button"
-                    onClick={() => setPrivacy("private")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-                      privacy === "private" 
-                        ? "border-yellow-500 bg-yellow-500/10" 
-                        : "border-gray-700 hover:border-gray-600"
-                    }`}
-                  >
-                    <Lock className={`w-6 h-6 ${privacy === "private" ? "text-yellow-400" : "text-gray-400"}`} />
-                    <span className="text-sm font-medium">비공개 토론</span>
-                    <p className="text-xs text-gray-400 text-center">초대된 사용자만</p>
-                  </button>
-                  
-                  {/* 초대 토론 */}
-                  <button
-                    type="button"
-                    onClick={() => setPrivacy("invitation")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-                      privacy === "invitation" 
-                        ? "border-blue-500 bg-blue-500/10" 
-                        : "border-gray-700 hover:border-gray-600"
-                    }`}
-                  >
-                    <Users className={`w-6 h-6 ${privacy === "invitation" ? "text-blue-400" : "text-gray-400"}`} />
-                    <span className="text-sm font-medium">초대 토론</span>
-                    <p className="text-xs text-gray-400 text-center">승인 후 참여 가능</p>
+                    <Plus className="w-5 h-5" />
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  토론의 공개 설정을 선택하세요. 참여자 제한을 통해 더 집중된 토론을 진행할 수 있습니다.
-                </p>
-              </div>
-            </div>
 
-            {/* 토론 주제 입력 */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  토론 주제
-                </label>
-                <button
-                  type="button"
-                  onClick={addTopicField}
-                  className="text-xs px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>주제 추가</span>
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {topics.map((topic) => (
-                  <div key={topic.id} className="flex gap-2 items-start">
-                    <textarea
-                      value={topic.value}
-                      onChange={(e) => updateTopicValue(topic.id, e.target.value)}
-                      placeholder="토론 주제를 입력하세요"
-                      rows={3}
-                      className="flex-1 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeTopicField(topic.id)}
-                      className="p-3 bg-gray-800/50 hover:bg-gray-800/70 rounded-lg transition-colors mt-1"
-                      disabled={topics.length === 1}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {tags.map((tag) => (
+                      <div
+                        key={tag}
+                        className="flex items-center gap-1 bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-lg"
+                      >
+                        <span>#{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="text-indigo-300 hover:text-indigo-100 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              <p className="text-xs text-gray-400 mt-1">
-                토론 주제를 여러 개 추가할 수 있습니다. &apos;주제 추가&apos; 버튼을 클릭하여 새로운 주제 입력 필드를 추가하세요.
-              </p>
-            </div>
-
-            {/* 태그 입력 */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                태그
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {tags.map((tag, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1 px-3 py-1 bg-indigo-500/20 rounded-full text-sm"
-                  >
-                    <span>{tag}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="p-0.5 hover:bg-indigo-500/30 rounded-full"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  placeholder="태그를 입력하고 Enter를 누르세요"
-                  className="flex-1 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={addTag}
-                  className="p-3 bg-indigo-500/20 hover:bg-indigo-500/30 rounded-lg transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
+                )}
               </div>
             </div>
 
             {/* 이미지 업로드 */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" />
-                이미지
-              </label>
+            <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <ImageIcon className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-lg font-medium">이미지</h2>
+              </div>
+
               <div className="space-y-4">
                 {/* 이미지 그리드 */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {/* 이미지 추가 버튼 */}
-                  <label className={`relative flex items-center justify-center w-full aspect-[4/3] rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 transition-all duration-300 border-2 border-dashed ${error && error.includes("이미지") ? 'border-red-500' : 'border-gray-700 hover:border-indigo-500'}`}>
+                  <label className="relative flex items-center justify-center w-full aspect-[4/3] rounded-xl cursor-pointer transition-all duration-300 border-2 border-dashed border-gray-600 bg-gray-800/50 hover:bg-gray-800 hover:border-indigo-500 hover:shadow-lg overflow-hidden group">
                     <input
                       type="file"
                       accept="image/*"
@@ -541,68 +562,56 @@ export default function NewDiscussionPage() {
                       multiple
                       className="hidden"
                     />
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-indigo-500" />
+                    <div className="flex flex-col items-center gap-2 transition-transform duration-200 group-hover:scale-110">
+                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                        <ImageIcon className="w-5 h-5 text-indigo-400" />
                       </div>
-                      <span className="text-sm text-gray-400">이미지 추가</span>
+                      <span className="text-sm text-gray-300 font-medium">이미지 추가</span>
                       <span className="text-xs text-gray-500">{images.length}/5</span>
                     </div>
                   </label>
 
                   {/* 이미지 미리보기 */}
                   {images.map((image) => (
-                    <div key={image.id} className="relative group aspect-[4/3]">
+                    <div key={image.id} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
                       <img
                         src={image.previewUrl}
                         alt="미리보기"
-                        className="w-full h-full object-cover rounded-xl"
+                        className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={() => removeImage(image.id)}
-                          className="p-2 rounded-full bg-gray-900/80 hover:bg-gray-800"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(image.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-red-500/80 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
-                </div>
-
-                {/* 이미지 가이드라인 */}
-                <div className="text-sm text-gray-400 space-y-1">
-                  <p>• 각 이미지는 최대 5MB까지 허용됩니다.</p>
                 </div>
               </div>
             </div>
 
-            {/* 오류 메시지 */}
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
             {/* 제출 버튼 */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="animate-pulse">작성 중...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  <span>토론 발제문 작성하기</span>
-                </>
-              )}
-            </button>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-medium hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    처리 중...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    토론 생성하기
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </div>

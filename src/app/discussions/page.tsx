@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Filter, Search, Calendar, Users, Globe, Lock, BookOpen, SlidersHorizontal } from "lucide-react";
+import Image from "next/image";
 
 // Components
 import HamburgerMenu from "@/components/HamburgerMenu";
@@ -11,6 +12,7 @@ import Sidebar from "@/components/Sidebar";
 import NewPostButton from "@/components/NewPostButton";
 import DiscussionCard from "@/components/DiscussionCard";
 import Loading from "@/components/Loading";
+import Logo from "@/components/Logo";
 
 // Types
 type PrivacyType = 'public' | 'private' | 'invitation' | 'all';
@@ -495,7 +497,6 @@ export default function DiscussionsPage() {
 }
 
 // Helper components
-
 function EmptyDiscussionState({ onNewDiscussion }: { onNewDiscussion: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-800/30 rounded-xl">
@@ -528,6 +529,9 @@ function DiscussionItem({
   discussion: Discussion,
   formatDate: (date: string) => string
 }) {
+  const [imageError, setImageError] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
   return (
     <div className="relative flex flex-col md:flex-row gap-4 overflow-hidden">
       {/* Main Card Area */}
@@ -552,12 +556,23 @@ function DiscussionItem({
       {/* Left Metadata Area */}
       <div className="w-full md:w-36 md:flex-shrink-0 flex flex-row md:flex-col justify-between md:justify-between gap-2 self-stretch order-1 md:order-1 pb-2 md:pb-0">
         {/* 이미지 섹션 */}
-        {discussion.imageUrls.length > 0 ? (
+        {discussion.imageUrls.length > 0 && !imageError ? (
           <div className="w-full h-full relative overflow-hidden rounded-lg mb-2">
-            <img
+            {isImageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80">
+                <div className="animate-pulse">
+                  <Loading />
+                </div>
+              </div>
+            )}
+            <Image
               src={discussion.imageUrls[0]} 
               alt={discussion.title}
+              width={144}
+              height={144}
               className="w-full h-full object-cover"
+              onLoad={() => setIsImageLoading(false)}
+              onError={() => setImageError(true)}
             />
             {discussion.imageUrls.length > 1 && (
               <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
@@ -567,7 +582,14 @@ function DiscussionItem({
           </div>
         ) : (
           <div className="w-full h-full relative rounded-lg mb-2 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
-            <BookOpen className="w-8 h-8 text-indigo-400/50" />
+            {imageError ? (
+              <div className="flex flex-col items-center">
+                <Logo size="md" />
+                <span className="text-xs text-gray-400 mt-1">이미지 오류</span>
+              </div>
+            ) : (
+              <BookOpen className="w-8 h-8 text-indigo-400/50" />
+            )}
           </div>
         )}
       </div>

@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="ko" className="overflow-y-scroll">
       <body className={`${inter.className} overflow-x-hidden`}>
         <Providers>{children}</Providers>
-        <Toaster position="top-right" />
+        <Toaster position="top-center" />
       </body>
     </html>
   );

@@ -3,9 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+interface DiscussionWithMaxParticipants {
+  maxParticipants?: number;
+  // 기타 필요한 필드 추가
+}
+
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +21,7 @@ export async function POST(
       );
     }
 
-    const discussionId = params.id;
+    const { id: discussionId } = await params;
     
     // Discussion 모델 수정 방법
     // 직접 타입 단언 사용
@@ -49,15 +54,16 @@ export async function POST(
     }
 
     // 타입 단언 사용
-    if ((discussion as any).maxParticipants) {
+    if ((discussion as DiscussionWithMaxParticipants).maxParticipants) {
       const currentParticipantsCount = await prisma.discussionParticipant.count({
         where: {
           discussionId,
           status: 'approved',
         },
       });
-
-      if (currentParticipantsCount >= (discussion as any).maxParticipants) {
+  
+      const maxParticipants = (discussion as DiscussionWithMaxParticipants).maxParticipants;
+      if (currentParticipantsCount >= maxParticipants!) {
         return NextResponse.json(
           { error: '참가 인원이 이미 가득 찼습니다.' },
           { status: 400 }
@@ -93,7 +99,7 @@ export async function POST(
 // 참가 상태 확인 API
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -104,9 +110,7 @@ export async function GET(
       );
     }
 
-    // params 객체를 비동기적으로 처리
-    const resolvedParams = await params;
-    const discussionId = resolvedParams.id;
+    const { id: discussionId } = await params;
     
     // 참가 신청 정보 조회
     const participation = await prisma.discussionParticipant.findUnique({

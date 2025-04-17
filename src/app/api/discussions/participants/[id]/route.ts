@@ -4,9 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // 참여자 상태 업데이트 API
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 세션 확인
@@ -18,8 +18,8 @@ export async function PUT(
       );
     }
 
-    const participantId = params.id;
-    const { action } = await req.json();
+    const { id: participantId } = await params;
+    const { action } = await request.json();
 
     // 요청 검증
     if (!participantId || !action) {

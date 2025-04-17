@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import StoryDetailModal from '@/components/StoryDetailModal';
 import Loading from '@/components/Loading';
@@ -24,17 +24,12 @@ interface Story {
 export default function StorySharePage() {
   const params = useParams();
   const router = useRouter();
-  const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [story, setStory] = useState<Story | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(true);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchStory();
-    }
-  }, [params.id]);
-
-  const fetchStory = async () => {
+  const fetchStory = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/stories/${params.id}`);
@@ -48,12 +43,21 @@ export default function StorySharePage() {
       setStory(data);
       setIsLoading(false);
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 불러오기 오류:', error);
       setIsLoading(false);
-      setError(error.message || '이야기를 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 불러오는 중 오류가 발생했습니다.';
+      setError(errorMessage);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchStory();
+    }
+  }, [params.id, fetchStory]);
 
   const handleClose = () => {
     router.push('/stories');
@@ -88,6 +92,7 @@ export default function StorySharePage() {
       story={{
         id: story.id,
         author: story.author.name || '익명',
+        authorImage: story.author.image || '',
         timeAgo: story.createdAt,
         title: story.title,
         content: story.content,

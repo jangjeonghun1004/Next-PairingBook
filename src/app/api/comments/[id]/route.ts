@@ -6,10 +6,10 @@ import { prisma } from '@/lib/prisma';
 // 댓글 삭제 API
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const commentId = params.id;
+    const { id: commentId } = await params;
     
     // 인증 세션 확인
     const session = await getServerSession(authOptions);

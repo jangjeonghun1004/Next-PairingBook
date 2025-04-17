@@ -1,9 +1,10 @@
 'use client';
 
-import { Bookmark, BookOpen, Home, Search, User } from "lucide-react";
+import { BookOpen, Home, MessageSquare, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import SearchModal from "./SearchModal";
+// import { useSession } from "next-auth/react";
 
 interface HamburgerMenuProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // const { status } = useSession();
+  // const isAuthenticated = status === 'authenticated';
 
   // 메뉴가 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -30,10 +33,9 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
   return (
     <>
       {/* 모바일 메뉴 */}
-      <div 
-        className={`md:hidden fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-40 transition-all duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+      <div
+        className={`md:hidden fixed inset-0 bg-gray-900/95 backdrop-blur-sm z-40 transition-all duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       >
         <div className="flex flex-col h-full pt-20 pb-8 px-6 overflow-y-auto">
           {/* 로고 */}
@@ -69,7 +71,17 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
               <BookOpen className="w-6 h-6" />
               <span className="text-base font-medium">이야기</span>
             </Link>
-            <button
+
+            <Link
+              href="/discussions"
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
+              onClick={() => onOpenChange(false)}
+            >
+              <MessageSquare className="w-6 h-6" />
+              <span className="text-base font-medium">독서 토론</span>
+            </Link>
+
+            {/* <button
               onClick={() => {
                 onOpenChange(false);
                 setIsSearchOpen(true);
@@ -78,19 +90,20 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
             >
               <Search className="w-6 h-6" />
               <span className="text-base font-medium">검색</span>
-            </button>
-            <button
+            </button> */}
+            {/* <button
               className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all text-left"
               onClick={() => onOpenChange(false)}
             >
               <Bookmark className="w-6 h-6" />
               <span className="text-base font-medium">저장</span>
-            </button>
+            </button> */}
           </nav>
 
           {/* 프로필 섹션 */}
           <div className="mt-auto">
-            <button
+            <Link
+              href="/profile"
               className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all w-full"
               onClick={() => onOpenChange(false)}
             >
@@ -101,7 +114,7 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
                 <span className="text-base font-medium">내 프로필</span>
                 <span className="text-sm text-gray-400">프로필 관리</span>
               </div>
-            </button>
+            </Link>
           </div>
         </div>
       </div>

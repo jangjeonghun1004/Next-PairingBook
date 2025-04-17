@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 노란색 태양 내부 원 -->
+  <circle cx="100" cy="100" r="40" fill="#FFD700" stroke="#FF8C00" stroke-width="3" />
+  
+  <!-- 태양 내부 나선 패턴 -->
+  <path d="M100 80 Q110 90 100 100 Q90 110 100 120 Q110 130 100 140" fill="none" stroke="#FF8C00" stroke-width="3" />
+  
+  <!-- 태양 광선들 -->
+  <path d="M100 40 L100 10" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M100 160 L100 190" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M40 100 L10 100" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M160 100 L190 100" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  
+  <!-- 대각선 광선들 -->
+  <path d="M70 70 L50 50" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M130 70 L150 50" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M70 130 L50 150" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  <path d="M130 130 L150 150" stroke="#FFD700" stroke-width="6" stroke-linecap="round" />
+  
+  <!-- 추가 짧은 광선들 -->
+  <path d="M100 48 L100 58" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M100 142 L100 152" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M48 100 L58 100" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M142 100 L152 100" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M65 65 L73 73" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M127 73 L135 65" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M65 135 L73 127" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+  <path d="M127 127 L135 135" stroke="#FF8C00" stroke-width="4" stroke-linecap="round" />
+</svg> 

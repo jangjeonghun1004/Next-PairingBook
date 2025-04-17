@@ -104,14 +104,14 @@ export default function HomePage() {
             </span>
           </div>
         </div>
-        <a
+        <Link
           href="/stories"
           className="flex items-center gap-1 md:gap-2 text-gray-300 hover:text-white text-sm font-medium transition-all duration-300 group"
         >
           <span>둘러 보기</span>
           <ArrowRight className="w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 group-hover:translate-x-1" />
           <span className="absolute w-0 h-px bg-gradient-to-r from-indigo-400 to-purple-500 bottom-0 left-0 group-hover:w-full transition-all duration-300"></span>
-        </a>
+        </Link>
       </header>
 
       <div className="min-h-screen flex items-center justify-center">
@@ -148,13 +148,13 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="mt-8 md:mt-12 text-center">
-                <a
+                <Link
                   href="/stories"
                   className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-indigo-500/25"
                 >
                   <span>둘러 보기</span>
                   <ArrowRight className="w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </a>
+                </Link>
               </div>
             </div>
           </div>

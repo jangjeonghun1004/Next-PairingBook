@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+// import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -52,11 +52,16 @@ export default function ForgotPasswordPage() {
 
       setEmailSent(true);
       toast.success('비밀번호 재설정 이메일이 전송되었습니다.');
-    } catch (error: any) {
-      setError(error.message || '비밀번호 재설정 메일 전송 중 오류가 발생했습니다.');
-      toast.error('요청 처리 중 오류가 발생했습니다.');
-    } finally {
+    } catch (error: unknown) {
+      console.error('비밀번호 재설정 이메일 전송 중 오류:', error);
       setIsSubmitting(false);
+      
+      const errorMessage = error instanceof Error
+        ? error.message
+        : '비밀번호 재설정 이메일을 보내는 중 오류가 발생했습니다.';
+      
+      setError(errorMessage);
+      toast.error('요청 처리 중 오류가 발생했습니다.');
     }
   };
 

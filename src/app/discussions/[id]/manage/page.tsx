@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, User, User2, Check, Clock, Ban, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, User2, Check, Clock, Ban, MoreHorizontal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 // 참여자 상태 타입
@@ -53,18 +53,7 @@ export default function DiscussionManagePage() {
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
 
   // 토론 정보 가져오기
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-      return;
-    }
-
-    if (status === 'authenticated' && params.id) {
-      fetchDiscussion();
-    }
-  }, [status, params.id, router]);
-
-  const fetchDiscussion = async () => {
+  const fetchDiscussion = useCallback(async () => {
     try {
       const response = await fetch(`/api/discussions/${params.id}?includeParticipants=true`);
       
@@ -87,15 +76,30 @@ export default function DiscussionManagePage() {
         isLoading: false,
         error: null
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '토론 정보를 불러오는 중 오류가 발생했습니다.';
+      
       setDiscussion(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || '토론 정보를 불러오는 중 오류가 발생했습니다.'
+        error: errorMessage
       }));
-      toast.error(error.message || '토론 정보를 불러오는 중 오류가 발생했습니다.');
+      toast.error(errorMessage);
     }
-  };
+  }, [params.id, router, session?.user?.id]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+      return;
+    }
+
+    if (status === 'authenticated' && params.id) {
+      fetchDiscussion();
+    }
+  }, [status, params.id, router, fetchDiscussion]);
 
   // 참여자 상태 변경 함수
   const handleStatusChange = async (participantId: string, newStatus: ParticipantStatus) => {
@@ -140,9 +144,12 @@ export default function DiscussionManagePage() {
       };
       
       toast.success(statusMessages[newStatus]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('참여자 상태 변경 중 오류:', error);
-      toast.error(error.message || '처리 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '처리 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setPendingActionId(null);
     }

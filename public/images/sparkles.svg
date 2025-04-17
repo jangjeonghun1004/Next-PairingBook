@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 핑크색 별 (왼쪽 상단) -->
+  <path d="M50 40 L53 50 L45 45 L55 45 L47 50 Z" fill="#FF86C8" stroke="none" />
+  
+  <!-- 파란색 별 (오른쪽 상단) -->
+  <path d="M140 30 L145 45 L135 40 L150 40 L140 45 Z" fill="#4169E1" stroke="none" />
+  
+  <!-- 주황색 꽃 모양 (왼쪽 중간) -->
+  <path d="M30 80 C35 70 45 75 40 85 C50 90 40 100 35 90 C25 95 25 85 35 80 C30 70 40 70 45 80" fill="#FF9E5E" stroke="none" />
+  
+  <!-- 보라색 별 (가운데) -->
+  <path d="M100 85 L110 100 L95 95 L105 110 L90 100 L100 115 L85 105 L95 120 L80 110 Z" fill="#836FFF" stroke="none" />
+  
+  <!-- 연한 핑크색 별 (왼쪽 하단) -->
+  <path d="M45 130 L50 140 L40 137 L50 143 L40 145 Z" fill="#FFB6C1" stroke="none" />
+  
+  <!-- 연한 주황색 별 (중앙 하단) -->
+  <path d="M90 150 L95 160 L85 155 L95 160 L90 165 Z" fill="#FFA07A" stroke="none" />
+  
+  <!-- 하늘색 별 (오른쪽 하단) -->
+  <path d="M140 120 L145 130 L135 125 L145 130 L140 135 Z" fill="#87CEFA" stroke="none" />
+  
+  <!-- 연한 보라색 별 (오른쪽 측면) -->
+  <path d="M160 80 L165 90 L155 87 L165 93 L155 95 Z" fill="#E6E6FA" stroke="none" />
+</svg> 

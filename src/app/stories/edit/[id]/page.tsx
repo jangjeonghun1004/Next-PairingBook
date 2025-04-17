@@ -1,21 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-
-interface Story {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  image_urls: string[];
-  authorId: string;
-}
 
 export default function EditStoryPage() {
   const router = useRouter();
@@ -24,7 +15,6 @@ export default function EditStoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [story, setStory] = useState<Story | null>(null);
   
   // 폼 상태
   const [title, setTitle] = useState('');
@@ -32,18 +22,8 @@ export default function EditStoryPage() {
   const [category, setCategory] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-      return;
-    }
-
-    if (status === 'authenticated' && params.id) {
-      fetchStory();
-    }
-  }, [status, params.id, router]);
-
-  const fetchStory = async () => {
+  // fetchStory 함수를 useCallback으로 감싸기
+  const fetchStory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/stories/${params.id}`);
@@ -62,8 +42,6 @@ export default function EditStoryPage() {
         return;
       }
       
-      setStory(data);
-      
       // 폼에 데이터 설정
       setTitle(data.title);
       setContent(data.content);
@@ -72,12 +50,26 @@ export default function EditStoryPage() {
       
       setLoading(false);
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 불러오기 오류:', error);
       setLoading(false);
-      setError(error.message || '이야기를 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error
+        ? error.message
+        : '이야기를 불러오는 중 오류가 발생했습니다.';
+      setError(errorMessage);
     }
-  };
+  }, [params.id, router, session?.user?.id]);
+  
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+      return;
+    }
+
+    if (status === 'authenticated' && params.id) {
+      fetchStory();
+    }
+  }, [status, params.id, router, fetchStory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,9 +117,12 @@ export default function EditStoryPage() {
       
       toast.success('이야기가 성공적으로 수정되었습니다.');
       router.push(`/stories/${params.id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 수정 오류:', error);
-      toast.error(error.message || '이야기를 수정하는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 수정하는 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
       setSaving(false);
     }
   };

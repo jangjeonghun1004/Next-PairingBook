@@ -15,7 +15,6 @@ import {
   Check, 
   X, 
   Plus,
-  Activity,
   AlertTriangle,
   LogOut
 } from 'lucide-react';
@@ -121,14 +120,14 @@ export default function DiscussionsManagePage() {
   };
 
   // 날짜 포맷팅 함수
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString('ko-KR', {
+  //     year: 'numeric',
+  //     month: 'long',
+  //     day: 'numeric'
+  //   });
+  // };
 
   // 시간 경과 계산 함수
   const timeAgo = (dateString: string) => {
@@ -202,9 +201,12 @@ export default function DiscussionsManagePage() {
           ? '참여 요청이 승인되었습니다.'
           : '참여 요청이 거절되었습니다.'
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('참여 요청 처리 중 오류:', error);
-      toast.error(error.message || '처리 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '처리 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setPendingActionId(null);
     }
@@ -235,9 +237,12 @@ export default function DiscussionsManagePage() {
       }));
 
       toast.success('토론 참여가 취소되었습니다.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('토론 참여 취소 중 오류:', error);
-      toast.error(error.message || '참여 취소 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '참여 취소 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setIsCancelling(false);
       setCancelDiscussionId(null);
@@ -276,7 +281,7 @@ export default function DiscussionsManagePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <div className="md:pl-64 p-6">
@@ -371,7 +376,7 @@ export default function DiscussionsManagePage() {
                           </Link>
                           
                           {/* 참여 취소 버튼 (토론 생성자가 아닐 경우에만 표시) */}
-                          {discussion.author.id !== session?.user.id && (
+                          {discussion.author.id !== session?.user?.id && (
                             <div className="mt-3 pt-3 border-t border-gray-700">
                               <button
                                 onClick={() => setCancelDiscussionId(discussion.id)}

@@ -1,20 +1,18 @@
 'use client';
 
-import { Home, BookOpen, Search, Bookmark, User, MessageSquare, PenSquare, Menu, Settings, Activity, Moon, HelpCircle, LogOut, LogIn } from "lucide-react";
+import { Home, BookOpen, Bookmark, User, MessageSquare, Menu, Settings, Activity, Moon, HelpCircle, LogOut, LogIn } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 
-interface SidebarProps {
-  onSearchClick: () => void;
-}
 
-export default function Sidebar({ onSearchClick }: SidebarProps) {
+
+export default function Sidebar() {
   const pathname = usePathname();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
 
   const isActive = (path: string) => {
@@ -57,27 +55,27 @@ export default function Sidebar({ onSearchClick }: SidebarProps) {
         <Link
           href="/myhome"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/myhome')
-              ? 'bg-indigo-500/20 text-indigo-400'
-              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            ? 'bg-indigo-500/20 text-indigo-400'
+            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <Home className="w-6 h-6 flex-shrink-0" />
           <span className="text-sm">홈</span>
         </Link>
 
-        <button
+        {/* <button
           onClick={onSearchClick}
           className="px-3 py-3 rounded-lg flex items-center gap-4 text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 transition-all text-left"
         >
           <Search className="w-6 h-6 flex-shrink-0" />
           <span className="text-sm">검색</span>
-        </button>
+        </button> */}
 
         <Link
           href="/stories"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/stories')
-              ? 'bg-indigo-500/20 text-indigo-400'
-              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            ? 'bg-indigo-500/20 text-indigo-400'
+            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <BookOpen className="w-6 h-6 flex-shrink-0" />
@@ -87,15 +85,15 @@ export default function Sidebar({ onSearchClick }: SidebarProps) {
         <Link
           href="/discussions"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/discussions')
-              ? 'bg-indigo-500/20 text-indigo-400'
-              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            ? 'bg-indigo-500/20 text-indigo-400'
+            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <MessageSquare className="w-6 h-6 flex-shrink-0" />
           <span className="text-sm">독서 토론</span>
         </Link>
 
-        <Link
+        {/* <Link
           href="/saved"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/saved')
               ? 'bg-indigo-500/20 text-indigo-400'
@@ -104,23 +102,25 @@ export default function Sidebar({ onSearchClick }: SidebarProps) {
         >
           <Bookmark className="w-6 h-6 flex-shrink-0" />
           <span className="text-sm">저장</span>
-        </Link>
+        </Link> */}
 
-        <Link
-          href="/profile"
-          className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/profile')
+        {isAuthenticated && (
+          <Link
+            href="/profile"
+            className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/profile')
               ? 'bg-indigo-500/20 text-indigo-400'
               : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
-            }`}
-        >
-          <User className="w-6 h-6 flex-shrink-0" />
-          <span className="text-sm">프로필</span>
-        </Link>
+              }`}
+          >
+            <User className="w-6 h-6 flex-shrink-0" />
+            <span className="text-sm">프로필</span>
+          </Link>
+        )}
       </div>
 
       {/* 하단 메뉴 */}
       <div className="mt-auto">
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <Link
             href="/new"
             className="px-3 py-3 rounded-lg flex items-center gap-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/20 mb-4"
@@ -128,14 +128,14 @@ export default function Sidebar({ onSearchClick }: SidebarProps) {
             <PenSquare className="w-6 h-6 flex-shrink-0" />
             <span className="text-sm">새 글</span>
           </Link>
-        )}
+        )} */}
 
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
             className={`px-3 py-3 rounded-lg flex items-center gap-4 w-full text-left transition-all ${showMoreMenu
-                ? 'bg-gray-800/50 text-gray-300'
-                : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+              ? 'bg-gray-800/50 text-gray-300'
+              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
               }`}
           >
             <Menu className="w-6 h-6 flex-shrink-0" />

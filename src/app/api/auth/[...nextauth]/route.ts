@@ -60,7 +60,6 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        // @ts-ignore - id 속성 추가
         session.user.id = token.id as string;
       }
       return session;

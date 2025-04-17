@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -22,14 +22,14 @@ import MobileHeader from "@/components/MobileHeader";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import SearchModal from "@/components/SearchModal";
 import TopicModal from "@/components/TopicModal";
-import dynamic from "next/dynamic";
+// import dynamic from "next/dynamic";
 import Loading from "@/components/Loading";
 
 // KakaoMap 컴포넌트를 dynamic import로 로드 (클라이언트 사이드에서만 렌더링)
-const MapComponent = dynamic(() => import('@/components/MapComponent'), {
-    ssr: false,
-    loading: () => <div className="w-full h-[300px] bg-gray-800 animate-pulse rounded-xl flex items-center justify-center">지도 로딩 중...</div>
-});
+// const MapComponent = dynamic(() => import('@/components/MapComponent'), {
+//     ssr: false,
+//     loading: () => <div className="w-full h-[300px] bg-gray-800 animate-pulse rounded-xl flex items-center justify-center">지도 로딩 중...</div>
+// });
 
 // 토론 인터페이스 (Prisma 모델에 맞춤)
 interface Discussion {
@@ -61,7 +61,7 @@ interface Discussion {
 
 export default function DiscussionDetailPage() {
     const params = useParams();
-    const router = useRouter();
+    // const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [discussion, setDiscussion] = useState<Discussion | null>(null);
@@ -76,36 +76,30 @@ export default function DiscussionDetailPage() {
     const [activeTab, setActiveTab] = useState<'info' | 'topics'>('info');
 
     // 데이터 로드
-    useEffect(() => {
-        const loadDiscussion = async () => {
-            setIsLoading(true);
-            try {
-                // API에서 토론 데이터 가져오기
-                const response = await fetch(`/api/discussions/${params.id}`);
+    const fetchDiscussion = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            // API에서 토론 데이터 가져오기
+            const response = await fetch(`/api/discussions/${params.id}`);
 
-                if (!response.ok) {
-                    throw new Error('토론을 불러오는데 실패했습니다');
-                }
-
-                const data = await response.json();
-                setDiscussion(data);
-
-                // 참가 상태 확인
-                await checkParticipationStatus();
-            } catch (error) {
-                console.error("토론을 불러오는 중 오류가 발생했습니다:", error);
-            } finally {
-                setIsLoading(false);
+            if (!response.ok) {
+                throw new Error('토론을 불러오는데 실패했습니다');
             }
-        };
 
-        if (params.id) {
-            loadDiscussion();
+            const data = await response.json();
+            setDiscussion(data);
+
+            // 참가 상태 확인
+            await checkParticipationStatus();
+        } catch (error) {
+            console.error("토론을 불러오는 중 오류가 발생했습니다:", error);
+        } finally {
+            setIsLoading(false);
         }
     }, [params.id]);
 
     // 참가 상태 확인
-    const checkParticipationStatus = async () => {
+    const checkParticipationStatus = useCallback(async () => {
         try {
             const response = await fetch(`/api/discussions/${params.id}/participants`);
 
@@ -127,7 +121,17 @@ export default function DiscussionDetailPage() {
         } catch (error) {
             console.error('참가 상태 확인 중 오류:', error);
         }
-    };
+    }, [params.id]);
+
+    // 토론 정보 로드 및 참가 상태 확인
+    useEffect(() => {
+        if (params.id) {
+            fetchDiscussion();
+            if (status === 'authenticated') {
+                checkParticipationStatus();
+            }
+        }
+    }, [params.id, fetchDiscussion, status, checkParticipationStatus]);
 
     // 좋아요 토글 함수
     const toggleLike = () => {
@@ -321,7 +325,7 @@ export default function DiscussionDetailPage() {
 
     // 뒤로가기 시 모달 닫기 처리
     useEffect(() => {
-        const handlePopState = (event: PopStateEvent) => {
+        const handlePopState = () => {
             if (isTopicModalOpen) {
                 closeTopicModal();
             }
@@ -354,7 +358,7 @@ export default function DiscussionDetailPage() {
             <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
 
             {/* 좌측 사이드바 */}
-            <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+            <Sidebar />
 
             {/* 검색 모달 */}
             <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

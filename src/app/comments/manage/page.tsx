@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, Trash2, ExternalLink, AlertTriangle, Search, FileText } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
@@ -23,7 +22,7 @@ interface Comment {
 
 export default function CommentsManagePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +111,7 @@ export default function CommentsManagePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar/>
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <div className="md:pl-64 p-6">

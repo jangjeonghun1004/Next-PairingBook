@@ -6,19 +6,18 @@ import { authOptions } from '@/lib/auth';
 // 이야기 조회 API
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getServerSession(authOptions);
     // 파라미터가 올바르게 전달되었는지 확인
-    if (!params?.id) {
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
       );
     }
-    
-    const storyId = params.id;
     
     // 이야기 기본 정보 조회
     const story = await prisma.story.findUnique({
@@ -99,7 +98,7 @@ export async function GET(
 // 이야기 삭제 API
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 세션 확인
@@ -112,8 +111,9 @@ export async function DELETE(
       );
     }
     
-    // 파라미터가 올바르게 전달되었는지 확인
-    if (!params?.id) {
+    // params 유효성 검사
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
@@ -121,7 +121,6 @@ export async function DELETE(
     }
     
     const userId = session.user.id;
-    const storyId = params.id;
     
     // 이야기 정보 조회
     const story = await prisma.story.findUnique({
@@ -174,7 +173,7 @@ export async function DELETE(
 // 이야기 수정 API
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 세션 확인
@@ -187,8 +186,9 @@ export async function PUT(
       );
     }
     
-    // 파라미터가 올바르게 전달되었는지 확인
-    if (!params?.id) {
+    // params 유효성 검사
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
@@ -196,7 +196,6 @@ export async function PUT(
     }
     
     const userId = session.user.id;
-    const storyId = params.id;
     
     // 요청 데이터 파싱
     const { title, content, category, image_urls } = await request.json();

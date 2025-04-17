@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -27,6 +27,8 @@ interface Story {
   author: Author;
   likesCount: number;
   commentsCount: number;
+  comments?: Comment[];
+  likes?: { userId: string }[];
 }
 
 interface Comment {
@@ -52,15 +54,12 @@ export default function StoryDetailPage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchStory();
-    }
-  }, [params.id]);
-
-  const fetchStory = async () => {
+  // 스토리 로드 함수 메모이제이션
+  const fetchStory = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
       const response = await fetch(`/api/stories/${params.id}`);
       
       if (!response.ok) {
@@ -70,23 +69,52 @@ export default function StoryDetailPage() {
       
       const data = await response.json();
       setStory(data);
-      setComments(data.comments || []);
-      setLikesCount(data.likesCount || 0);
-      
-      // 현재 사용자가 좋아요를 눌렀는지 확인
-      if (status === 'authenticated' && session?.user?.id) {
-        const userLiked = data.likes.some((like: any) => like.userId === session.user.id);
-        setIsLiked(userLiked);
-      }
-      
+    } catch (error: unknown) {
+      console.error('이야기 로드 중 오류:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 불러오는 중 오류가 발생했습니다.';
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
-      setError(null);
-    } catch (error: any) {
-      console.error('이야기 불러오기 오류:', error);
-      setIsLoading(false);
-      setError(error.message || '이야기를 불러오는 중 오류가 발생했습니다.');
     }
-  };
+  }, [params.id]);
+
+  const loadComments = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/stories/${params.id}/comments`);
+      if (!response.ok) throw new Error('댓글 로딩 실패');
+      const data = await response.json();
+      setComments(data.comments || []);
+    } catch (error) {
+      console.error('댓글 로딩 중 오류:', error);
+      toast.error('댓글을 불러오는 중 오류가 발생했습니다.');
+    }
+  }, [params.id]);
+
+  const checkLikeStatus = useCallback(async () => {
+    if (!session?.user) return;
+    try {
+      const response = await fetch(`/api/stories/${params.id}/like/status`);
+      if (!response.ok) throw new Error('좋아요 상태 확인 실패');
+      const { liked } = await response.json();
+      setIsLiked(liked);
+      setLikesCount(story?.likesCount || 0);
+    } catch (error) {
+      console.error('좋아요 상태 확인 중 오류:', error);
+    }
+  }, [params.id, session?.user, story]);
+
+  // 로드 및 상태 확인
+  useEffect(() => {
+    if (status === 'authenticated' || status === 'unauthenticated') {
+      fetchStory();
+      loadComments();
+      if (status === 'authenticated') {
+        checkLikeStatus();
+      }
+    }
+  }, [status, fetchStory, loadComments, checkLikeStatus]);
 
   // 이야기 삭제 처리
   const handleDeleteStory = async () => {
@@ -104,9 +132,12 @@ export default function StoryDetailPage() {
       
       toast.success('이야기가 삭제되었습니다.');
       router.push('/stories/manage');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 삭제 오류:', error);
-      toast.error(error.message || '이야기를 삭제하는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 삭제하는 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
       setIsDeletingStory(false);
       setDeleteConfirm(false);
     }
@@ -136,9 +167,12 @@ export default function StoryDetailPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || '좋아요 처리 중 오류가 발생했습니다.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('좋아요 처리 오류:', error);
-      toast.error(error.message || '좋아요 처리 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '좋아요 처리 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     }
   };
 
@@ -178,9 +212,12 @@ export default function StoryDetailPage() {
       setComments(prev => [...prev, newComment]);
       setCommentText('');
       toast.success('댓글이 작성되었습니다.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('댓글 작성 오류:', error);
-      toast.error(error.message || '댓글 작성 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '댓글 작성 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -224,7 +261,7 @@ export default function StoryDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <div className="sm:pl-[80px] lg:pl-[240px]">

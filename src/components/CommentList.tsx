@@ -1,7 +1,7 @@
 'use client';
 
-import { Heart } from "lucide-react";
-import { useState } from "react";
+// import { Heart } from "lucide-react";
+// import { useState } from "react";
 
 interface Comment {
   id: number;
@@ -16,15 +16,15 @@ interface CommentListProps {
 }
 
 export default function CommentList({ comments }: CommentListProps) {
-  const [likedComments, setLikedComments] = useState<number[]>([]);
+  // const [likedComments, setLikedComments] = useState<number[]>([]);
 
-  const toggleLike = (commentId: number) => {
-    setLikedComments(prev => 
-      prev.includes(commentId)
-        ? prev.filter(id => id !== commentId)
-        : [...prev, commentId]
-    );
-  };
+  // const toggleLike = (commentId: number) => {
+  //   setLikedComments(prev => 
+  //     prev.includes(commentId)
+  //       ? prev.filter(id => id !== commentId)
+  //       : [...prev, commentId]
+  //   );
+  // };
 
   return (
     <div className="space-y-4">

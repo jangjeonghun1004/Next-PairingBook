@@ -31,14 +31,14 @@ export default function NewStoryPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [content, setContent] = useState("");
   const [images, setImages] = useState<ImageFile[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("novel");
+  // const [selectedCategory, setSelectedCategory] = useState("novel");
   const [errors, setErrors] = useState<{
     content?: string;
     images?: string;
     form?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewMode, setPreviewMode] = useState(false);
+  // const [previewMode, setPreviewMode] = useState(false);
 
   useEffect(() => {
     // 페이지 진입 시 스크롤을 맨 위로
@@ -117,7 +117,7 @@ export default function NewStoryPage() {
           try {
             // Supabase Storage에 이미지 업로드
             const fileName = `story-images/${Date.now()}_${image.file.name}`;
-            const { data, error } = await supabase.storage
+            const { error } = await supabase.storage
               .from('story-images')
               .upload(fileName, image.file, {
                 cacheControl: '3600',
@@ -154,7 +154,7 @@ export default function NewStoryPage() {
         body: JSON.stringify({
           title: '',
           content,
-          category: selectedCategory,
+          category: 'story',
           images: uploadedImages
         })
       });
@@ -178,7 +178,7 @@ export default function NewStoryPage() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <div className="sm:pl-[80px] lg:pl-[240px]"> {/* Sidebar 너비를 고려한 좌측 패딩 (모바일에서는 제거) */}
@@ -190,8 +190,9 @@ export default function NewStoryPage() {
               className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-medium text-sm sm:text-base">뒤로가기</span>
+              {/* <span className="font-medium text-sm sm:text-base">뒤로가기</span> */}
             </Link>
+            
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">이야기</h1>
             <div className="w-[72px] sm:w-[89px]"></div> {/* 좌우 균형을 맞추기 위한 더미 div */}
           </div>

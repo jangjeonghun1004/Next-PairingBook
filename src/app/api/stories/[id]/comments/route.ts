@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 세션 확인
@@ -19,7 +19,8 @@ export async function POST(
     }
     
     // params 유효성 검사
-    if (!params?.id) {
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
@@ -27,7 +28,6 @@ export async function POST(
     }
     
     const userId = session.user.id;
-    const storyId = params.id;
     
     // 요청 데이터 파싱
     const { content } = await request.json();
@@ -83,18 +83,18 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // params 유효성 검사
-    if (!params?.id) {
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
       );
     }
     
-    const storyId = params.id;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '0');
     const limit = 10; // 한 페이지당 10개의 댓글

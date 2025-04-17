@@ -240,7 +240,7 @@ export default function StoriesPage() {
       {/* 모바일 헤더, 햄버거 메뉴, 사이드바, 검색 모달, 새 글 작성 버튼 */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar/>
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NewPostButton isMenuOpen={isMenuOpen} path="/stories/new" />
 
@@ -302,15 +302,6 @@ export default function StoriesPage() {
                               </div>
                             </div>
                           )}
-
-                          {/* 타이틀 오버레이 - 항상 표시되는 하단 그라데이션 */}
-                          {/* <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pt-12 pb-3 z-10">
-                            <h3 className="text-sm font-medium text-white line-clamp-1">{story.title}</h3>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className="text-xs text-gray-300">{story.author.name || '익명'}</p>
-                              <p className="text-xs text-gray-400">{timeAgo(story.createdAt)}</p>
-                            </div>
-                          </div> */}
                         </div>
                       )}
                     </div>
@@ -331,7 +322,6 @@ export default function StoriesPage() {
         <StoryDetailModal
           isOpen={isModalOpen}
           onClose={() => {
-            console.log('StoryDetailModal onClose 콜백 실행');
             // 모달 닫기 시 호출되는 콜백
             handleCloseModal();
             
@@ -361,6 +351,7 @@ export default function StoriesPage() {
           story={{
             id: selectedStory.id,
             author: selectedStory.author.name || '익명',
+            authorImage: selectedStory.author.image || '',
             timeAgo: selectedStory.createdAt,
             title: selectedStory.title,
             content: selectedStory.content,

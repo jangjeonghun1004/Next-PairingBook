@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { Session } from 'next-auth';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
+    const session = await getServerSession(authOptions) as Session;
     if (!session?.user) {
       return NextResponse.json(
         { error: '인증되지 않은 사용자입니다.' },

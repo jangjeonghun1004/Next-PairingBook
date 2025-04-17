@@ -164,7 +164,7 @@ export default function NewDiscussionPage() {
           try {
             // Supabase Storage에 이미지 업로드
             const fileName = `story-images/${Date.now()}_${image.file.name}`;
-            const { data, error } = await supabase.storage
+            const { error } = await supabase.storage
               .from('story-images')
               .upload(fileName, image.file, {
                 cacheControl: '3600',
@@ -225,7 +225,7 @@ export default function NewDiscussionPage() {
         throw new Error(error.message || '토론을 생성하는 중 오류가 발생했습니다.');
       }
       
-      const data = await response.json();
+      // const data = await response.json();
       
       // 성공 메시지 표시
       toast.success('토론이 성공적으로 생성되었습니다.');
@@ -256,7 +256,7 @@ export default function NewDiscussionPage() {
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
 
       {/* 좌측 사이드바 */}
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
 
       {/* 검색 모달 */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
@@ -367,11 +367,11 @@ export default function NewDiscussionPage() {
                   <div className="space-y-3">
                     {topics.map((topic, index) => (
                       <div key={topic.id} className="flex items-center gap-2">
-                        <input
-                          type="text"
+                        <textarea
+                          rows={5}
                           value={topic.value}
                           onChange={(e) => updateTopicValue(topic.id, e.target.value)}
-                          className="flex-1 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                          className="flex-1 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner resize-none"
                           placeholder={`토론 주제 ${index + 1}`}
                         />
                         <button

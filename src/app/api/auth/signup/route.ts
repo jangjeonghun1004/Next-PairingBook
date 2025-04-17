@@ -55,8 +55,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // 비밀번호 제외하고 응답
-    const { password: _, ...userWithoutPassword } = user;
+    // 비밀번호 필드를 제외하고 응답 반환
+    const { ...userWithoutPassword } = user;
 
     return NextResponse.json(
       { 

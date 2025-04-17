@@ -33,7 +33,7 @@ export default function StoryManagePage() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -60,10 +60,13 @@ export default function StoryManagePage() {
       setStories(data);
       setIsLoading(false);
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 불러오기 오류:', error);
       setIsLoading(false);
-      setError(error.message || '이야기를 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 불러오는 중 오류가 발생했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -84,9 +87,12 @@ export default function StoryManagePage() {
       setStories(prevStories => prevStories.filter(story => story.id !== storyId));
       toast.success('이야기가 삭제되었습니다.');
       setDeleteConfirm(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('이야기 삭제 오류:', error);
-      toast.error(error.message || '이야기를 삭제하는 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '이야기를 삭제하는 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setSelectedStory(null);
     }
@@ -283,7 +289,7 @@ export default function StoryManagePage() {
                   <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full">
                       <h3 className="text-xl font-semibold mb-4">이야기 삭제 확인</h3>
-                      <p className="mb-6">'{story.title}'을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                      <p className="mb-6">&apos;{story.title}&lsquo;을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
                       <div className="flex justify-end gap-3">
                         <button
                           onClick={() => setDeleteConfirm(null)}

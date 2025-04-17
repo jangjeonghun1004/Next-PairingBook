@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // 토론 참여자 상태 업데이트 API
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string, participantId: string } }
+  { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
   try {
     // 인증 세션 확인
@@ -20,8 +20,7 @@ export async function PATCH(
     }
 
     const userId = session.user.id;
-    const discussionId = params.id;
-    const participantId = params.participantId;
+    const { id: discussionId, participantId } = await params;
     
     const { status } = await request.json();
     

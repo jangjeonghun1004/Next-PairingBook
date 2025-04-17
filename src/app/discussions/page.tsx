@@ -92,8 +92,30 @@ export default function DiscussionsPage() {
 
       const data = await response.json();
 
+      // API 응답 타입 정의
+      interface ApiDiscussion {
+        id: string;
+        title: string;
+        content: string;
+        author?: {
+          name?: string | null;
+          image?: string | null;
+        };
+        bookTitle: string;
+        bookAuthor: string;
+        createdAt: string;
+        likes?: number;
+        comments?: number;
+        tags?: string[];
+        imageUrls?: string[];
+        scheduledAt?: string;
+        maxParticipants?: number;
+        currentParticipants?: number;
+        privacy?: PrivacyType;
+      }
+
       // Map API response to Discussion interface
-      const formattedDiscussions = data.discussions.map((discussion: any) => ({
+      const formattedDiscussions = data.discussions.map((discussion: ApiDiscussion) => ({
         id: discussion.id,
         title: discussion.title,
         content: discussion.content,
@@ -203,18 +225,6 @@ export default function DiscussionsPage() {
     updateFilter('participantRange', newRange as [number, number]);
   };
 
-  // Format date utility
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   // Filter discussions
   const filteredDiscussions = discussions.filter(discussion => {
     // Search filter
@@ -294,7 +304,7 @@ export default function DiscussionsPage() {
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
 
       {/* Left Sidebar */}
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
 
       {/* Search Modal */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
@@ -475,7 +485,6 @@ export default function DiscussionsPage() {
                 <DiscussionItem
                   key={discussion.id}
                   discussion={discussion}
-                  formatDate={formatDate}
                 />
               ))}
             </div>
@@ -524,10 +533,8 @@ function EndMessage() {
 
 function DiscussionItem({
   discussion,
-  formatDate
 }: {
   discussion: Discussion,
-  formatDate: (date: string) => string
 }) {
   const [imageError, setImageError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -540,6 +547,7 @@ function DiscussionItem({
           id={discussion.id}
           title={discussion.title}
           author={discussion.author.name || '익명'}
+          authorImage={discussion.author.image || ''}
           bookTitle={discussion.bookTitle}
           bookAuthor={discussion.bookAuthor}
           createdAt={discussion.createdAt}

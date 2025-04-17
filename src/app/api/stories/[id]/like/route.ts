@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 세션 확인
@@ -19,7 +19,8 @@ export async function POST(
     }
     
     // params 유효성 검사
-    if (!params?.id) {
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
@@ -27,7 +28,6 @@ export async function POST(
     }
     
     const userId = session.user.id;
-    const storyId = params.id;
     
     // 이야기 존재 확인
     const story = await prisma.story.findUnique({

@@ -12,6 +12,7 @@ interface StoryDetailModalProps {
   story: {
     id: string;
     author: string;
+    authorImage?: string;
     timeAgo: string;
     title: string;
     content: string;
@@ -333,7 +334,15 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
         <div className="flex items-center justify-between p-4 border-b border-gray-800/50 sticky top-0 bg-gray-900/90 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-sm font-semibold text-white">{story.author[0]}</span>
+              {story.authorImage ? (
+                <img
+                  src={story.authorImage}
+                  alt={story.author || '사용자'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-semibold text-white">{story.author[0]}</span>
+              )}
             </div>
             <div>
               <div className="font-medium text-white truncate max-w-[180px]">{story.author}</div>
@@ -354,30 +363,27 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
             <div className="flex flex-col lg:flex-row gap-8">
               {/* 이미지 섹션 */}
               <div className="w-full lg:w-3/5 lg:sticky lg:top-[88px] lg:self-start px-0 sm:px-2 md:px-0">
-                <div 
-                  className={`relative rounded-xl overflow-hidden bg-gray-800/30 shadow-2xl mx-auto ${
-                    imageRatio === 'portrait'
+                <div
+                  className={`relative rounded-xl overflow-hidden bg-gray-800/30 shadow-2xl mx-auto ${imageRatio === 'portrait'
                       ? 'w-[85%] sm:w-[80%] md:w-auto md:max-w-sm'
                       : 'w-full'
-                  } group transition-all duration-300`}
+                    } group transition-all duration-300`}
                 >
-                  <div className={`flex items-center justify-center ${
-                    imageRatio === 'portrait' 
+                  <div className={`flex items-center justify-center ${imageRatio === 'portrait'
                       ? 'min-h-[40vh] max-h-[65vh] md:min-h-[50vh] md:max-h-[80vh]'
                       : imageRatio === 'landscape'
-                        ? 'aspect-[16/9] md:aspect-video' 
+                        ? 'aspect-[16/9] md:aspect-video'
                         : 'aspect-square'
-                  }`}>
+                    }`}>
                     <img
                       src={story.images[currentImageIndex]}
                       alt={story.title}
-                      className={`${
-                        imageRatio === 'portrait'
+                      className={`${imageRatio === 'portrait'
                           ? 'h-auto w-full object-contain'
                           : imageRatio === 'landscape'
-                            ? 'w-full h-auto object-contain' 
+                            ? 'w-full h-auto object-contain'
                             : 'w-full h-full object-cover'
-                      } image-transition ${isImageTransitioning ? 'opacity-50' : 'opacity-100'}`}
+                        } image-transition ${isImageTransitioning ? 'opacity-50' : 'opacity-100'}`}
                       style={{
                         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
                       }}
@@ -416,8 +422,8 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
                           key={index}
                           onClick={() => setCurrentImageIndex(index)}
                           className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex
-                              ? "bg-white w-3 h-3"
-                              : "bg-white/50 hover:bg-white/80"
+                            ? "bg-white w-3 h-3"
+                            : "bg-white/50 hover:bg-white/80"
                             }`}
                           aria-label={`${index + 1}번 이미지로 이동`}
                         />

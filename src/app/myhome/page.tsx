@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import MobileHeader from "@/components/MobileHeader";
 import Sidebar from "@/components/Sidebar";
 import StoryCard from "@/components/StoryCard";
 import { toast } from "react-hot-toast";
-import { BookOpen, Calendar, Users, Clock, ArrowRight, BookText, HomeIcon, Activity, BookOpenCheck, Settings, Edit, MessageSquare } from "lucide-react";
+import { BookOpen, Calendar, Users, Clock, ArrowRight, BookText, HomeIcon, Activity, Edit, MessageSquare } from "lucide-react";
 
 // 타입 정의
 interface User {
@@ -122,6 +122,8 @@ export default function MyHomePage() {
 
   const fetchHomeData = async () => {
     try {
+      setData(prev => ({ ...prev, isLoading: true, error: null }));
+      
       const response = await fetch('/api/myhome');
       
       if (!response.ok) {
@@ -141,22 +143,26 @@ export default function MyHomePage() {
         isLoading: false,
         error: null
       });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '데이터를 불러오는 중 오류가 발생했습니다.';
+    } catch (error: unknown) {
+      console.error('마이홈 데이터 로드 중 오류:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '데이터를 불러오는 중 오류가 발생했습니다.';
+      
       setData(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast.error(errorMessage);
     }
   };
 
   // 날짜 포맷팅 함수
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString('ko-KR', {
+  //     year: 'numeric',
+  //     month: 'long',
+  //     day: 'numeric'
+  //   });
+  // };
 
   // 시간 경과 계산 함수
   const timeAgo = (dateString: string) => {
@@ -230,9 +236,12 @@ export default function MyHomePage() {
           ? '참여 요청이 승인되었습니다.'
           : '참여 요청이 거절되었습니다.'
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('참여 요청 처리 중 오류:', error);
-      toast.error(error.message || '처리 중 오류가 발생했습니다.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '처리 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
     } finally {
       setPendingActionId(null);
     }
@@ -269,7 +278,7 @@ export default function MyHomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen">
       {/* 모바일 헤더 */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
@@ -277,7 +286,7 @@ export default function MyHomePage() {
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
 
       {/* 좌측 사이드바 */}
-      <Sidebar onSearchClick={() => setIsSearchOpen(true)} />
+      <Sidebar />
 
       {/* 검색 모달 */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

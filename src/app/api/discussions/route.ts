@@ -37,7 +37,21 @@ export async function POST(request: NextRequest) {
     console.error(topics);
 
     // 토론 생성 시 데이터 준비
-    const discussionData: any = {
+    interface DiscussionCreateData {
+      title: string;
+      content: string;
+      bookTitle: string;
+      bookAuthor: string;
+      tags: string[];
+      topics: string[];
+      imageUrls: string[];
+      authorId: string;
+      privacy: string;
+      scheduledAt?: Date | null;
+      maxParticipants?: number;
+    }
+
+    const discussionData: DiscussionCreateData = {
       title,
       content,
       bookTitle,
@@ -102,13 +116,31 @@ export async function GET(request: NextRequest) {
             image: true,
           },
         },
+        participants: {
+          where: {
+            status: 'approved'
+          }
+        }
       },
     });
+
+    // 각 토론별 승인된 참가자 수 계산
+    const discussionsWithParticipantCount = await Promise.all(
+      discussions.map(async (discussion) => {
+        // 현재 participants는 이미 포함되어 있으므로 그 길이를 사용
+        const currentParticipants = discussion.participants.length;
+        
+        return {
+          ...discussion,
+          currentParticipants
+        };
+      })
+    );
 
     const total = await prisma.discussion.count();
 
     return NextResponse.json({
-      discussions,
+      discussions: discussionsWithParticipantCount,
       hasMore: (page + 1) * limit < total,
     });
   } catch (error) {

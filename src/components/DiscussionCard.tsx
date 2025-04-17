@@ -1,6 +1,6 @@
 'use client';
 
-import { PenTool, Heart, MessageCircle, ArrowRight, User, Flag, Shield, X, MoreHorizontal, ChevronLeft, ChevronRight, BookOpen, Globe, Lock, Users, Calendar } from "lucide-react";
+import { PenTool, Heart, MessageCircle, ArrowRight, User, Flag, Shield, X, MoreHorizontal, BookOpen, Globe, Lock, Users, Calendar } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "./Logo";
@@ -13,6 +13,7 @@ interface DiscussionCardProps {
   id: string;
   title: string;
   author: string;
+  authorImage: string;
   bookTitle: string;
   bookAuthor: string;
   createdAt: string;
@@ -29,6 +30,7 @@ export default function DiscussionCard({
   id,
   title,
   author,
+  authorImage,
   bookTitle,
   bookAuthor,
   createdAt,
@@ -159,7 +161,15 @@ export default function DiscussionCard({
             <div className="flex items-center justify-between p-3 md:p-4 border-b border-gray-700/50">
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
-                  <span className="text-xs md:text-sm font-medium">{author[0]}</span>
+                  {authorImage ? (
+                    <img
+                      src={authorImage}
+                      alt={author || '사용자'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs md:text-sm font-medium">{author[0]}</span>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1 md:gap-2">
@@ -239,7 +249,7 @@ export default function DiscussionCard({
                 {/* 태그 */}
                 {tags.length > 0 && tags.map((tag, index) => (
                   <span key={index} className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full bg-indigo-500/30 text-white">
-                    {tag}
+                    {`#` + tag}
                   </span>
                 ))}
               </div>

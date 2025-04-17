@@ -6,14 +6,14 @@ import { compare } from "bcrypt";
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: "email", type: "text" },
+        password: { label: "password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Invalid credentials');
         }
 
         const user = await prisma.user.findUnique({
@@ -22,17 +22,17 @@ export const authOptions: NextAuthOptions = {
           }
         });
 
-        if (!user) {
-          return null;
+        if (!user || !user?.password) {
+          throw new Error('Invalid credentials');
         }
 
-        const isPasswordValid = await compare(
+        const isCorrectPassword = await compare(
           credentials.password,
           user.password
         );
 
-        if (!isPasswordValid) {
-          return null;
+        if (!isCorrectPassword) {
+          throw new Error('Invalid credentials');
         }
 
         return {
@@ -48,17 +48,17 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   pages: {
-    signIn: "/",
+    signIn: "/login",
   },
   callbacks: {
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
-      }
-      return session;
+    session: ({ session, token }) => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub,
+        }
+      };
     },
     async jwt({ token, user }) {
       if (user) {
@@ -66,5 +66,6 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     }
-  }
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 }; 

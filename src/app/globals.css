@@ -39,6 +39,7 @@ html {
   -webkit-scrollbar-gutter: stable;
   scroll-behavior: smooth;
   overflow-y: overlay; /* 레이아웃을 유지하면서 스크롤바 표시 */
+  overflow-x: hidden; /* 수평 스크롤 숨김 */
 }
 
 body {
@@ -52,9 +53,9 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  overflow-x: hidden;
+  overflow-x: hidden; /* 수평 스크롤 숨김 */
   margin-right: 0 !important; /* 스크롤바로 인한 마진 방지 */
-  width: 100vw;
+  width: 100%; /* 100vw에서 100%로 변경하여 스크롤바 유발 방지 */
   position: relative;
 }
 
@@ -64,9 +65,10 @@ body {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
+/* 수직 스크롤바 스타일 */
 *::-webkit-scrollbar {
   width: var(--scrollbar-width);
-  height: var(--scrollbar-width);
+  height: 0; /* 수평 스크롤바 높이를 0으로 설정하여 숨김 */
 }
 
 *::-webkit-scrollbar-track {
@@ -91,6 +93,7 @@ body {
 
 *::-webkit-scrollbar-corner {
   background: transparent;
+  display: none; /* 스크롤바 코너 숨김 */
 }
 
 /* 모바일 디바이스에서 스크롤 유동적 효과 */
@@ -103,6 +106,12 @@ body {
   html, body {
     width: 100%;
     overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  /* 모바일에서 수평 스크롤바 완전히 숨김 */
+  *::-webkit-scrollbar:horizontal {
+    display: none;
   }
 }
 

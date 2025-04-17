@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,14 +18,14 @@ export async function GET(
     }
 
     // params 유효성 검사
-    if (!params?.id) {
+    const { id: storyId } = await params;
+    if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },
         { status: 400 }
       );
     }
 
-    const storyId = params.id;
     const userId = session.user.id;
 
     // 사용자의 좋아요 상태 확인
@@ -37,7 +37,7 @@ export async function GET(
     });
 
     return NextResponse.json({ 
-      isLiked: !!userLike
+      liked: !!userLike
     });
     
   } catch (error) {

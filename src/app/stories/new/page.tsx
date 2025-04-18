@@ -173,8 +173,12 @@ export default function NewStoryPage() {
                 }
               }}
               className={`w-full h-48 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 resize-none border ${errors.content ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
-                } transition-all duration-200 shadow-inner text-sm`}
+                } transition-all duration-200 shadow-inner text-base`}
               placeholder="이야기의 내용을 입력하세요"
+              inputMode="text"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
 
             {/* 내용 에러 메세지 */}

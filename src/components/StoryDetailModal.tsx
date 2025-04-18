@@ -113,17 +113,38 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      // 초기 이미지 인덱스와 좋아요 수 설정
       setCurrentImageIndex(story.currentImageIndex);
       setLikesCount(story.likes);
-
+      
       // 이미지 비율에 따라 모달 스타일 조정
       checkImageRatio();
+      
+      // 현재 스크롤 위치 저장
+      const savedScrollPosition = window.scrollY;
+      
+      // 스크롤 방지를 위한 스타일 적용
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${savedScrollPosition}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      // 모달이 닫힐 때 스타일 복원
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      // 스크롤 위치 복원
+      window.scrollTo(0, parseInt(document.body.style.top || '0') * -1);
     }
+    
     return () => {
-      document.body.style.overflow = 'unset';
+      // 컴포넌트 언마운트 시 스타일 복원
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
     };
   }, [isOpen, story.currentImageIndex, story.likes, story.images]);
 
@@ -294,17 +315,14 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   // 브라우저 뒤로가기 처리
   useEffect(() => {
     // popstate 이벤트 핸들러 정의
-    const handlePopState = (event: PopStateEvent) => {
-      console.log('StoryDetailModal popstate 이벤트 발생', event.state);
+    const handlePopState = () => {
       if (isOpen) {
-        console.log('StoryDetailModal 닫기 실행');
         onClose();
       }
     };
 
     // 모달이 열릴 때
     if (isOpen && !historyStateAdded) {
-      console.log('StoryDetailModal 히스토리 상태 추가');
       // 현재 URL을 history에 추가 (모달이 열릴 때마다)
       window.history.pushState({ modal: true, storyId: story.id }, '', window.location.pathname);
       setHistoryStateAdded(true);
@@ -313,9 +331,8 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
       window.addEventListener('popstate', handlePopState);
     }
 
-    // 클린업 함수: 컴포넌트 언마운트 시, 또는 의존성 변경 시 실행
+    // 클린업 함수
     return () => {
-      console.log('StoryDetailModal 이벤트 리스너 제거');
       window.removeEventListener('popstate', handlePopState);
 
       // 모달이 닫힐 때 상태 초기화
@@ -328,8 +345,8 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-gray-900/98 to-black/98 backdrop-blur-md z-50 overflow-y-auto">
-      <div className="min-h-screen flex flex-col max-w-7xl mx-auto">
+    <div className="fixed inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col overflow-hidden">
+      <div className="flex flex-col w-full h-full max-w-7xl mx-auto overflow-y-auto">
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800/50 sticky top-0 bg-gray-900/90 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">

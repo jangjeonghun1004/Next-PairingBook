@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
-import SearchModal from "@/components/SearchModal";
 import MobileHeader from "@/components/MobileHeader";
 import Sidebar from "@/components/Sidebar";
 import NewPostButton from "@/components/NewPostButton";
@@ -31,7 +30,6 @@ interface Story {
 }
 
 export default function StoriesPage() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [stories, setStories] = useState<Story[]>([]);
   const [page, setPage] = useState(0);
@@ -48,19 +46,14 @@ export default function StoriesPage() {
   // 브라우저 뒤로가기 처리
   useEffect(() => {
     // popstate 이벤트 핸들러 정의
-    const handlePopState = (event: PopStateEvent) => {
-      console.log('popstate 이벤트 발생', event.state);
-      // 뒤로가기 버튼 클릭 시 모달 닫기
+    const handlePopState = () => {
       if (isModalOpen) {
-        setIsModalOpen(false);
-        setSelectedStory(null);
+        handleCloseModal();
       }
     };
     
     // 모달이 열릴 때
     if (isModalOpen) {
-      console.log('모달이 열림, 히스토리 상태 추가');
-      
       // 모달이 열리면 히스토리에 상태 추가
       if (!historyStateAdded) {
         window.history.pushState({ modal: true }, '', window.location.pathname);
@@ -71,12 +64,11 @@ export default function StoriesPage() {
       window.addEventListener('popstate', handlePopState);
     }
     
-    // 클린업 함수: 컴포넌트 언마운트 시, 또는 의존성 변경 시 실행
+    // 클린업 함수
     return () => {
-      console.log('이벤트 리스너 제거');
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isModalOpen]); // handleCloseModal은 제거하고 직접 상태 변경
+  }, [isModalOpen, historyStateAdded]);
 
   // 모달 닫힐 때 히스토리 상태 초기화
   useEffect(() => {
@@ -87,7 +79,6 @@ export default function StoriesPage() {
 
   // 모달 닫기 핸들러
   const handleCloseModal = () => {
-    console.log('모달 닫기 핸들러 호출');
     setIsModalOpen(false);
     setSelectedStory(null);
   };
@@ -136,7 +127,6 @@ export default function StoriesPage() {
 
   // 이미지 크기 분석 함수
   const analyzeImages = async (stories: Story[]): Promise<Story[]> => {
-    // 이미지 분석을 위한 Promise 배열
     const promises = stories.map(async (story) => {
       if (!story.image_urls || story.image_urls.length === 0) {
         return { ...story, imageLayout: 'square' as const, gridSpan: 'none' as const };
@@ -145,19 +135,14 @@ export default function StoriesPage() {
       try {
         // 첫 번째 이미지의 크기 분석
         const layout = await getImageLayout(story.image_urls[0]);
-
-        // 그리드 배치 결정
         let gridSpan: 'row' | 'col' | 'both' | 'none';
 
-        // 이미지 비율에 따라 적절한 그리드 스팬 할당
+        // 이미지 비율에 따라 그리드 스팬 할당
         if (layout === 'landscape') {
-          // 가로형 이미지는 가로로 2칸 차지 (약 30% 확률)
           gridSpan = Math.random() > 0.7 ? 'row' : 'none';
         } else if (layout === 'portrait') {
-          // 세로형 이미지는 항상 세로로 2칸 차지
           gridSpan = 'col';
         } else if (Math.random() > 0.9) {
-          // 정사각형 이미지 중 일부는 2x2 그리드 차지 (10% 확률)
           gridSpan = 'both';
         } else {
           gridSpan = 'none';
@@ -178,28 +163,18 @@ export default function StoriesPage() {
     return new Promise((resolve) => {
       const img = new globalThis.Image();
       img.onload = () => {
-        const { width, height } = img;
-        const ratio = width / height;
-
-        // 비율 기준 조정: 더 엄격한 기준 적용
-        if (ratio > 1.3) {
-          resolve('landscape');
-        } else if (ratio < 0.75) {
-          resolve('portrait');
-        } else {
-          resolve('square');
-        }
+        const ratio = img.width / img.height;
+        if (ratio > 1.3) resolve('landscape');
+        else if (ratio < 0.75) resolve('portrait');
+        else resolve('square');
       };
 
-      img.onerror = () => {
-        // 이미지 로드 실패 시 기본값으로 square 반환
-        resolve('square');
-      };
-
+      img.onerror = () => resolve('square');
       img.src = imageUrl;
     });
   };
 
+  // 무한 스크롤 설정
   useEffect(() => {
     if (!isClient) return;
 
@@ -227,6 +202,28 @@ export default function StoriesPage() {
     };
   }, [isLoading, isClient, page]);
 
+  // 스토리 업데이트 함수
+  const updateStoryData = (storyId: string) => {
+    fetch(`/api/stories/${storyId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setStories(prevStories => 
+            prevStories.map(story => 
+              story.id === storyId 
+                ? { 
+                    ...story, 
+                    likes: data.likesCount || story.likes,
+                    commentCount: data.commentsCount || story.commentCount
+                  } 
+                : story
+            )
+          );
+        }
+      })
+      .catch(err => console.error('Error updating story data:', err));
+  };
+
   // 별도 컴포넌트: EndMessage
   const EndMessage = () => (
     <div className="text-gray-400 text-center">
@@ -235,19 +232,22 @@ export default function StoriesPage() {
     </div>
   );
 
+  // 공통 CSS 클래스
+  const transitionClasses = "transition-all duration-300";
+  const hoverScaleClasses = "transition-transform duration-500 group-hover:scale-105";
+
   return (
     <div className="min-h-screen">
-      {/* 모바일 헤더, 햄버거 메뉴, 사이드바, 검색 모달, 새 글 작성 버튼 */}
+      {/* UI 컴포넌트 */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
       <Sidebar/>
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <NewPostButton isMenuOpen={isMenuOpen} path="/stories/new" />
 
       <main className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8">
-        <section className="w-full max-w-6xl pt-12 md:pt-8">
-          {/* 갤러리(인스타그램) 보기 모드 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 auto-rows-auto max-w-full grid-flow-dense">
+        <section className="w-full max-w-5xl pt-12 md:pt-8">
+          {/* 갤러리 그리드 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-2 auto-rows-auto max-w-full grid-flow-dense">
             {isClient &&
               stories.map((story) => {
                 // 그리드 스팬 클래스 결정
@@ -261,10 +261,10 @@ export default function StoriesPage() {
 
                 // 이미지 레이아웃에 따른 컨테이너 스타일 결정
                 const containerClass = story.imageLayout === 'portrait'
-                  ? 'aspect-[3/4]' // 세로형 이미지
+                  ? 'aspect-[3/4]'
                   : story.imageLayout === 'landscape'
-                    ? 'aspect-[4/3]' // 가로형 이미지
-                    : 'aspect-square'; // 정사각형 이미지
+                    ? 'aspect-[4/3]'
+                    : 'aspect-square';
 
                 return (
                   <div
@@ -278,11 +278,11 @@ export default function StoriesPage() {
                           <img
                             src={story.image_urls[0]}
                             alt={story.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className={`w-full h-full object-cover ${hoverScaleClasses}`}
                           />
                           {/* 오버레이 */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-4">
+                          <div className={`absolute inset-0 bg-black/0 group-hover:bg-black/40 ${transitionClasses} flex items-center justify-center`}>
+                            <div className={`opacity-0 group-hover:opacity-100 ${transitionClasses} flex gap-4`}>
                               <div className="flex items-center gap-1 text-white">
                                 <Heart className="w-5 h-5" />
                                 <span>{story.likes}</span>
@@ -322,30 +322,9 @@ export default function StoriesPage() {
         <StoryDetailModal
           isOpen={isModalOpen}
           onClose={() => {
-            // 모달 닫기 시 호출되는 콜백
             handleCloseModal();
-            
-            // 스토리 정보 갱신 (최신 likes와 comments 카운트 반영)
             if (selectedStory) {
-              fetch(`/api/stories/${selectedStory.id}`)
-                .then(res => res.json())
-                .then(data => {
-                  if (data) {
-                    // 스토리 목록에서 해당 스토리 업데이트
-                    setStories(prevStories => 
-                      prevStories.map(story => 
-                        story.id === selectedStory.id 
-                          ? { 
-                              ...story, 
-                              likes: data.likesCount || story.likes,
-                              commentCount: data.commentsCount || story.commentCount
-                            } 
-                          : story
-                      )
-                    );
-                  }
-                })
-                .catch(err => console.error('Error updating story data:', err));
+              updateStoryData(selectedStory.id);
             }
           }}
           story={{

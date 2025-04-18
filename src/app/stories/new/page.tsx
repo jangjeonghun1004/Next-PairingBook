@@ -117,9 +117,9 @@ export default function NewStoryPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title:'',
+          title: '',
           content,
-          category:'story',
+          category: 'story',
           images: uploadedImages
         })
       });
@@ -141,8 +141,8 @@ export default function NewStoryPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-3 py-6 sm:px-4 sm:py-8 md:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col items-center px-4 pb-8 w-full">
+      <div className="w-full max-w-4xl pt-12 md:pt-8">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
           <Link
@@ -172,8 +172,8 @@ export default function NewStoryPage() {
                   setErrors({ ...errors, content: undefined });
                 }
               }}
-              className={`w-full h-48 sm:h-64 p-3 sm:p-4 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 resize-none border ${errors.content ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
-                } transition-all duration-200 shadow-inner text-sm sm:text-base`}
+              className={`w-full h-48 p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 resize-none border ${errors.content ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
+                } transition-all duration-200 shadow-inner text-sm`}
               placeholder="이야기의 내용을 입력하세요"
             />
 
@@ -268,7 +268,6 @@ export default function NewStoryPage() {
             </div>
           </div>
         </form>
-
       </div>
     </div>
   );

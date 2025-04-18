@@ -223,21 +223,19 @@ export default function NewStoryPage() {
 
                 {/* 이미지 미리보기 */}
                 {images.map((image) => (
-                  <div key={image.id} className="relative group aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-gray-700 transition-all duration-300 hover:shadow-xl hover:border-gray-500">
+                  <div key={image.id} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
                     <img
                       src={image.previewUrl}
                       alt="미리보기"
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end">
-                      <button
-                        type="button"
-                        onClick={() => removeImage(image.id)}
-                        className="p-1.5 sm:p-2 m-2 sm:m-3 rounded-full bg-red-500/80 hover:bg-red-600 transition-all duration-200 hover:scale-110 shadow-lg"
-                      >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(image.id)}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-red-500/80 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

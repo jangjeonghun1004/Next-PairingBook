@@ -338,7 +338,7 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-gray-900 backdrop-blur-md flex flex-col overflow-hidden">
       <div className="flex flex-col w-full h-full max-w-7xl mx-auto overflow-y-auto">
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800/50 sticky top-0 bg-gray-900/90 backdrop-blur-md z-10">
@@ -519,7 +519,7 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
                 </div>
 
                 {/* 댓글 섹션 */}
-                <div className="border-t border-gray-800/50 mt-4">
+                <div className="border-gray-800/50">
                   {/* 댓글 입력 */}
                   <form onSubmit={handleSubmitComment} className="sticky bottom-0 mt-5 p-4 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800/50 rounded-b-lg">
                     <div className="flex items-center gap-3">

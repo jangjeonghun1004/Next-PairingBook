@@ -259,7 +259,7 @@ export default function StoriesPage() {
       <NewPostButton isMenuOpen={isMenuOpen} path="/stories/new" />
 
       <main ref={mainContainerRef} className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8">
-        <section className="w-full max-w-5xl pt-12 md:pt-8">
+        <section className="w-full max-w-6xl pt-12 md:pt-8">
           {/* 갤러리 그리드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-2 auto-rows-auto max-w-full grid-flow-dense">
             {isClient &&

@@ -120,31 +120,24 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
       // 이미지 비율에 따라 모달 스타일 조정
       checkImageRatio();
       
-      // 현재 스크롤 위치 저장
-      const savedScrollPosition = window.scrollY;
-      
       // 스크롤 방지를 위한 스타일 적용
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${savedScrollPosition}px`;
-      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      // top 속성은 StoriesPage에서 관리하므로 여기서는 설정하지 않음
     } else {
       // 모달이 닫힐 때 스타일 복원
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
       document.body.style.overflow = '';
-      
-      // 스크롤 위치 복원
-      window.scrollTo(0, parseInt(document.body.style.top || '0') * -1);
+      document.body.style.position = '';
+      document.body.style.width = '';
+      // 스크롤 위치 복원은 StoriesPage에서 처리
     }
     
     return () => {
       // 컴포넌트 언마운트 시 스타일 복원
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [isOpen, story.currentImageIndex, story.likes, story.images]);
 

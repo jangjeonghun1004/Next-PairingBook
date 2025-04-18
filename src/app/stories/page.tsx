@@ -42,6 +42,10 @@ export default function StoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [historyStateAdded, setHistoryStateAdded] = useState(false);
+  // 스크롤 위치 저장을 위한 변수 추가
+  const [savedScrollPosition, setSavedScrollPosition] = useState(0);
+  // 메인 컨테이너 ref 추가
+  const mainContainerRef = useRef<HTMLDivElement>(null);
 
   // 브라우저 뒤로가기 처리
   useEffect(() => {
@@ -81,10 +85,20 @@ export default function StoriesPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedStory(null);
+    
+    // 약간의 지연 후 저장된 스크롤 위치로 복원
+    setTimeout(() => {
+      window.scrollTo({
+        top: savedScrollPosition,
+        behavior: 'instant'
+      });
+    }, 10);
   };
 
   // 스토리 선택 핸들러
   const handleStoryClick = (story: Story, imageIndex: number = 0) => {
+    // 현재 스크롤 위치 저장
+    setSavedScrollPosition(window.scrollY);
     setSelectedStory(story);
     setCurrentImageIndex(imageIndex);
     setIsModalOpen(true);
@@ -244,7 +258,7 @@ export default function StoriesPage() {
       <Sidebar/>
       <NewPostButton isMenuOpen={isMenuOpen} path="/stories/new" />
 
-      <main className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8">
+      <main ref={mainContainerRef} className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8">
         <section className="w-full max-w-5xl pt-12 md:pt-8">
           {/* 갤러리 그리드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-2 auto-rows-auto max-w-full grid-flow-dense">

@@ -17,13 +17,10 @@ import {
     Info,
     Eye,
 } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import MobileHeader from "@/components/MobileHeader";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import SearchModal from "@/components/SearchModal";
 import TopicModal from "@/components/TopicModal";
 // import dynamic from "next/dynamic";
 import Loading from "@/components/Loading";
+import { useSession } from "next-auth/react";
 
 // KakaoMap 컴포넌트를 dynamic import로 로드 (클라이언트 사이드에서만 렌더링)
 // const MapComponent = dynamic(() => import('@/components/MapComponent'), {
@@ -62,8 +59,6 @@ interface Discussion {
 export default function DiscussionDetailPage() {
     const params = useParams();
     // const router = useRouter();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [discussion, setDiscussion] = useState<Discussion | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
@@ -74,6 +69,7 @@ export default function DiscussionDetailPage() {
     const [participantsCount, setParticipantsCount] = useState<number>(0);
     const [isJoinLoading, setIsJoinLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'info' | 'topics'>('info');
+    const { data: session } = useSession();
 
     // 데이터 로드
     const fetchDiscussion = useCallback(async () => {
@@ -127,11 +123,11 @@ export default function DiscussionDetailPage() {
     useEffect(() => {
         if (params.id) {
             fetchDiscussion();
-            if (status === 'authenticated') {
+            if (session) {
                 checkParticipationStatus();
             }
         }
-    }, [params.id, fetchDiscussion, status, checkParticipationStatus]);
+    }, [params.id, fetchDiscussion, session, checkParticipationStatus]);
 
     // 좋아요 토글 함수
     const toggleLike = () => {
@@ -351,18 +347,6 @@ export default function DiscussionDetailPage() {
 
     return (
         <div className="min-h-screen overflow-x-hidden">
-            {/* 모바일 헤더 */}
-            <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
-
-            {/* 햄버거 메뉴 */}
-            <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
-
-            {/* 좌측 사이드바 */}
-            <Sidebar />
-
-            {/* 검색 모달 */}
-            <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-
             {/* 토스트 알림 */}
             {showToast && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 bg-opacity-90 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -371,7 +355,7 @@ export default function DiscussionDetailPage() {
             )}
 
             {/* 메인 콘텐츠 */}
-            <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+            <div className="min-h-screen flex flex-col items-center px-4 pb-8 w-full">
                 <div className="w-full max-w-4xl pt-12 md:pt-8">
                     {/* 헤더 */}
                     <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
@@ -380,9 +364,10 @@ export default function DiscussionDetailPage() {
                             className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
                         >
                             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="font-medium text-sm sm:text-base">뒤로가기</span>
                         </Link>
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">토론 상세</h1>
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500 absolute left-1/2 transform -translate-x-1/2">토론 상세</h1>
+                        <div className="w-[36px] h-[36px] sm:w-[72px]"></div> {/* 좌우 균형을 맞추기 위한 더미 div */}
+
                         <button
                             onClick={handleShare}
                             className="flex items-center justify-center p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
@@ -390,6 +375,7 @@ export default function DiscussionDetailPage() {
                         >
                             <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
+
                     </div>
 
                     {isLoading ? (<Loading />) : discussion ? (

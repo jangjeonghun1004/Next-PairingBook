@@ -18,10 +18,6 @@ import {
   Globe,
   Lock
 } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import MobileHeader from "@/components/MobileHeader";
-import HamburgerMenu from "@/components/HamburgerMenu";
-import SearchModal from "@/components/SearchModal";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 
@@ -37,8 +33,6 @@ type PrivacyType = 'public' | 'private' | 'invitation';
 
 export default function NewDiscussionPage() {
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [bookTitle, setBookTitle] = useState("");

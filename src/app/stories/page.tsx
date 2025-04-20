@@ -6,7 +6,7 @@ import MobileHeader from "@/components/MobileHeader";
 import Sidebar from "@/components/Sidebar";
 import NewPostButton from "@/components/NewPostButton";
 import Loading from "@/components/Loading";
-import { Heart, MessageCircle, BookText } from "lucide-react";
+import { Heart, MessageCircle, Images as ImagesIcon } from "lucide-react";
 import StoryDetailModal from "@/components/StoryDetailModal";
 
 // 스토리 타입 정의
@@ -312,7 +312,7 @@ export default function StoriesPage() {
                           {story.image_urls.length > 1 && (
                             <div className="absolute top-2 right-2 z-10">
                               <div className="w-5 h-5 rounded-full bg-gray-900/60 backdrop-blur-sm flex items-center justify-center">
-                                <BookText className="w-3 h-3 text-white" />
+                                <ImagesIcon className="w-3 h-3 text-white" />
                               </div>
                             </div>
                           )}
@@ -344,6 +344,7 @@ export default function StoriesPage() {
           story={{
             id: selectedStory.id,
             author: selectedStory.author.name || '익명',
+            authorId: selectedStory.author.id || '',
             authorImage: selectedStory.author.image || '',
             timeAgo: selectedStory.createdAt,
             title: selectedStory.title,

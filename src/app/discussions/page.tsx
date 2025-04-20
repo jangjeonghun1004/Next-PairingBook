@@ -297,6 +297,9 @@ export default function DiscussionsPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+       {/* Loading Indicator */}
+       {isLoading && <Loading />}
+       
       {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
@@ -490,10 +493,7 @@ export default function DiscussionsPage() {
             </div>
           )}
 
-          {/* Loading Indicator */}
-          <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-800/30 rounded-xl">
-            {isLoading && <Loading />}
-          </div>
+         
 
           {/* End Message */}
           <div ref={loadingRef} className="w-full py-8 flex flex-col items-center justify-center">
@@ -542,7 +542,7 @@ function DiscussionItem({
   return (
     <div className="relative flex flex-col md:flex-row gap-4 overflow-hidden">
       {/* Main Card Area */}
-      <div className="flex-grow md:flex-1 h-full flex order-2 md:order-2">
+      <div className="flex-grow md:flex-1 flex order-2 md:order-2">
         <DiscussionCard
           id={discussion.id}
           title={discussion.title}
@@ -562,8 +562,7 @@ function DiscussionItem({
       </div>
 
       {/* Left Metadata Area */}
-      <div className="w-full md:w-36 md:flex-shrink-0 flex flex-row md:flex-col justify-between md:justify-between gap-2 self-stretch order-1 md:order-1 pb-2 md:pb-0">
-        {/* 이미지 섹션 */}
+      <div className="w-full md:w-48 md:flex-shrink-0 flex flex-row md:flex-col justify-between md:justify-between gap-2 self-stretch order-1 md:order-1 pb-2 md:pb-0">
         {discussion.imageUrls.length > 0 && !imageError ? (
           <div className="w-full h-full relative overflow-hidden rounded-lg mb-2">
             {isImageLoading && (

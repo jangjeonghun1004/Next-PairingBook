@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Heart, MessageCircle, Bookmark, Share2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Heart, MessageCircle, Share2, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
@@ -12,6 +12,7 @@ interface StoryDetailModalProps {
   story: {
     id: string;
     author: string;
+    authorId?: string;
     authorImage?: string;
     timeAgo: string;
     title: string;
@@ -27,7 +28,6 @@ interface StoryDetailModalProps {
 export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetailModalProps) {
   const { data: session } = useSession();
   const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [comment, setComment] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [likesCount, setLikesCount] = useState(story.likes);
@@ -42,6 +42,8 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const [isImageTransitioning, setIsImageTransitioning] = useState(false);
   const [historyStateAdded, setHistoryStateAdded] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // 댓글 타입 정의
   interface Comment {
@@ -111,15 +113,89 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
     checkLikeStatus();
   }, [session?.user, story.id, isOpen]);
 
+  // 팔로우 상태 확인
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!session?.user || !isOpen || !story.authorId) return;
+
+      // 자신의 게시물인 경우 확인하지 않음
+      if (session.user.id === story.authorId) return;
+
+      try {
+        setIsFollowLoading(true);
+        const response = await fetch(`/api/users/follow?followingId=${story.authorId}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFollowing(data.isFollowing);
+        }
+      } catch (error) {
+        console.error("팔로우 상태 확인 중 오류:", error);
+      } finally {
+        setIsFollowLoading(false);
+      }
+    };
+
+    checkFollowStatus();
+  }, [session?.user, story.authorId, isOpen]);
+
+  // 팔로우 토글 함수
+  const handleFollowToggle = async () => {
+    if (!session?.user) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!story.authorId) {
+      toast.error("작성자 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 자신을 팔로우할 수 없음
+    if (session.user.id === story.authorId) {
+      toast.error("자신을 팔로우할 수 없습니다.");
+      return;
+    }
+
+    setIsFollowLoading(true);
+
+    try {
+      const response = await fetch('/api/users/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ followingId: story.authorId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsFollowing(data.isFollowing);
+        toast.success(data.isFollowing
+          ? `${story.author}님을 팔로우합니다.`
+          : `${story.author}님 팔로우를 취소했습니다.`
+        );
+      } else {
+        toast.error(data.error || "팔로우 처리 중 오류가 발생했습니다.");
+      }
+    } catch (error) {
+      console.error("팔로우 처리 중 오류:", error);
+      toast.error("팔로우 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       // 초기 이미지 인덱스와 좋아요 수 설정
       setCurrentImageIndex(story.currentImageIndex);
       setLikesCount(story.likes);
-      
+
       // 이미지 비율에 따라 모달 스타일 조정
       checkImageRatio();
-      
+
       // 스크롤 방지를 위한 스타일 적용
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
@@ -132,7 +208,7 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
       document.body.style.width = '';
       // 스크롤 위치 복원은 StoriesPage에서 처리
     }
-    
+
     return () => {
       // 컴포넌트 언마운트 시 스타일 복원
       document.body.style.overflow = '';
@@ -375,24 +451,24 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
               <div className="w-full lg:w-3/5 lg:sticky lg:top-[88px] lg:self-start px-0 sm:px-2 md:px-0">
                 <div
                   className={`relative rounded-xl overflow-hidden bg-gray-800/30 shadow-2xl mx-auto ${imageRatio === 'portrait'
-                      ? 'w-[85%] sm:w-[80%] md:w-auto md:max-w-sm'
-                      : 'w-full'
+                    ? 'w-[85%] sm:w-[80%] md:w-auto md:max-w-sm'
+                    : 'w-full'
                     } group transition-all duration-300`}
                 >
                   <div className={`flex items-center justify-center ${imageRatio === 'portrait'
-                      ? 'min-h-[40vh] max-h-[65vh] md:min-h-[50vh] md:max-h-[80vh]'
-                      : imageRatio === 'landscape'
-                        ? 'aspect-[16/9] md:aspect-video'
-                        : 'aspect-square'
+                    ? 'min-h-[40vh] max-h-[65vh] md:min-h-[50vh] md:max-h-[80vh]'
+                    : imageRatio === 'landscape'
+                      ? 'aspect-[16/9] md:aspect-video'
+                      : 'aspect-square'
                     }`}>
                     <img
                       src={story.images[currentImageIndex]}
                       alt={story.title}
                       className={`${imageRatio === 'portrait'
-                          ? 'h-auto w-full object-contain'
-                          : imageRatio === 'landscape'
-                            ? 'w-full h-auto object-contain'
-                            : 'w-full h-full object-cover'
+                        ? 'h-auto w-full object-contain'
+                        : imageRatio === 'landscape'
+                          ? 'w-full h-auto object-contain'
+                          : 'w-full h-full object-cover'
                         } image-transition ${isImageTransitioning ? 'opacity-50' : 'opacity-100'}`}
                       style={{
                         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
@@ -465,14 +541,35 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
                       <MessageCircle className="w-5 h-5" />
                       <span className="font-medium">{story.comments}</span>
                     </button>
+                    {/* 팔로우 버튼 (자신의 게시물이 아닐 경우만 표시) */}
+                    {session?.user && story.authorId && session.user.id !== story.authorId && (
+                      <>
+                        <span className="text-gray-400">·</span>
+                        <button
+                          onClick={handleFollowToggle}
+                          disabled={isFollowLoading}
+                          className={`flex items-center gap-1 text-sm font-medium ${isFollowing
+                              ? "text-indigo-400"
+                              : "text-gray-300"
+                            } transition-colors ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          {isFollowLoading ? (
+                            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <span>{isFollowing ? "팔로잉" : "팔로우"}</span>
+                          )}
+                        </button>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-4">
-                    <button
+                    
+                    {/* <button
                       onClick={() => setIsBookmarked(!isBookmarked)}
                       className={`${isBookmarked ? "text-yellow-500" : "text-gray-300"} cursor-pointer hover:text-yellow-500 transition-colors`}
                     >
                       <Bookmark className={`w-5 h-5 transition-transform ${isBookmarked ? "fill-yellow-500 scale-110" : ""}`} />
-                    </button>
+                    </button> */}
                     <button onClick={handleShare} className="text-gray-300 cursor-pointer hover:text-purple-400 transition-colors">
                       <Share2 className="w-5 h-5" />
                     </button>
@@ -504,6 +601,27 @@ export default function StoryDetailModal({ isOpen, onClose, story }: StoryDetail
                       <MessageCircle className="w-5 h-5" />
                       <span className="font-medium">{story.comments}</span>
                     </button>
+
+                    {/* 팔로우 버튼 (자신의 게시물이 아닐 경우만 표시) */}
+                    {session?.user && story.authorId && session.user.id !== story.authorId && (
+                      <>
+                        <span className="text-gray-400">·</span>
+                        <button
+                          onClick={handleFollowToggle}
+                          disabled={isFollowLoading}
+                          className={`flex items-center gap-1.5 text-sm font-medium cursor-pointer ${isFollowing
+                              ? "text-indigo-400 hover:text-indigo-300"
+                              : "text-gray-300 hover:text-indigo-400"
+                            } transition-colors ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          {isFollowLoading ? (
+                            <div className="w-3 h-3 border-2 cursor-pointer border-current border-t-transparent rounded-full animate-spin mr-1"></div>
+                          ) : null}
+                          {isFollowing ? "팔로잉" : "팔로우"}
+                        </button>
+                      </>
+                    )}
+
                     <div className="ml-auto flex items-center gap-5">
                       {/* <button
                         onClick={() => setIsBookmarked(!isBookmarked)}

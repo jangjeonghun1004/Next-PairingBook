@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-// import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { Camera, Loader2, ArrowLeft, AlertCircle, User, Check, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
-import SearchModal from '@/components/SearchModal';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import PairingBookPage1 from '@/components/pairing-book/PairingBookPage1';
@@ -41,7 +38,6 @@ interface PairingQuestion {
 export default function ProfilePage() {
     // const router = useRouter();
     const { data: session, update: updateSession, status } = useSession();
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isImageUploading, setIsImageUploading] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -63,15 +59,15 @@ export default function ProfilePage() {
     });
     // const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
-    // const [bookColors, setBookColors] = useState<string[]>([
-    //     '#ffffff', // 흰색
-    //     '#f3f4f6', // 연한 회색
-    //     '#fef3c7', // 연한 노란색
-    //     '#d1fae5', // 연한 녹색
-    //     '#dbeafe', // 연한 파란색
-    //     '#ede9fe', // 연한 보라색
-    //     '#fce7f3'  // 연한 분홍색
-    // ]);
+    const [bookColors, setBookColors] = useState<string[]>([
+        '#ffffff', // 흰색
+        '#f3f4f6', // 연한 회색
+        '#fef3c7', // 연한 노란색
+        '#d1fae5', // 연한 녹색
+        '#dbeafe', // 연한 파란색
+        '#ede9fe', // 연한 보라색
+        '#fce7f3'  // 연한 분홍색
+    ]);
 
     // 페어링 모달 관련 상태 및 함수
     const [showPairingModal, setShowPairingModal] = useState(false);
@@ -96,11 +92,11 @@ export default function ProfilePage() {
         try {
             setIsLoading(true);
             const response = await fetch(`/api/users/${session?.user?.id}`);
-            
+
             if (!response.ok) {
                 throw new Error('프로필을 불러오는데 실패했습니다.');
             }
-            
+
             const data = await response.json();
             setProfile(data);
             setNewName(data.name || '');
@@ -129,7 +125,7 @@ export default function ProfilePage() {
 
             // 이미지 파일 임시 저장
             setImageFile(file);
-            
+
             // 크롭 모달을 위한 이미지 URL 생성
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -137,7 +133,7 @@ export default function ProfilePage() {
                 setShowCropModal(true);
             };
             reader.readAsDataURL(file);
-            
+
             // 에러 초기화
             if (errors.image) {
                 setErrors({ ...errors, image: undefined });
@@ -149,17 +145,17 @@ export default function ProfilePage() {
     const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
         const { width, height } = e.currentTarget;
         imgRef.current = e.currentTarget;
-        
+
         // 이미지 스케일 계산 (화면에 표시된 크기와 실제 이미지 크기의 비율)
         // const scaleX = naturalWidth / width;
         // const scaleY = naturalHeight / height;
-        
+
         // 초기 크롭 영역을 원형으로 설정 (1/3 정도 작게 설정)
         const minSize = Math.min(width, height);
         const cropSize = minSize * 0.67; // 2/3 크기로 설정 (1/3 작게)
         const x = (width - cropSize) / 2;
         const y = (height - cropSize) / 2;
-        
+
         // 초기 crop 설정
         const initialCrop: Crop = {
             unit: 'px',
@@ -168,10 +164,10 @@ export default function ProfilePage() {
             x,
             y,
         };
-        
+
         // crop 상태 설정
         setCrop(initialCrop);
-        
+
         // 초기 completedCrop 값도 설정 (영역을 이동하지 않아도 저장 가능하도록)
         setCompletedCrop({
             width: cropSize,
@@ -180,48 +176,48 @@ export default function ProfilePage() {
             y: y,
             unit: 'px'
         } as PixelCrop);
-        
+
     };
 
     // 크롭된 이미지 생성
     const getCroppedImg = (image: HTMLImageElement, pixelCrop: PixelCrop): Promise<Blob> => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         if (!ctx) {
             throw new Error('캔버스 컨텍스트를 가져올 수 없습니다.');
         }
 
         // 원형 마스크를 적용하기 위해 정사각형 캔버스 설정
         // const size = Math.min(pixelCrop.width, pixelCrop.height);
-        
+
         // 최종 이미지 크기 설정 (정사각형)
         const outputSize = 300; // 고정된 출력 크기로 설정
         canvas.width = outputSize;
         canvas.height = outputSize;
-        
+
         // 비율 계산
         const scaleX = image.naturalWidth / image.width;
         const scaleY = image.naturalHeight / image.height;
-        
+
         // 원형 마스크 생성
         ctx.beginPath();
         ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, 2 * Math.PI);
         ctx.closePath();
         ctx.clip();
-        
+
         // 크롭할 영역의 좌표 및 크기 계산
         const sourceX = pixelCrop.x * scaleX;
         const sourceY = pixelCrop.y * scaleY;
         const sourceWidth = pixelCrop.width * scaleX;
         const sourceHeight = pixelCrop.height * scaleY;
-        
+
         // 디버깅 로그
         console.log('원본 이미지 크기:', image.naturalWidth, 'x', image.naturalHeight);
         console.log('표시 이미지 크기:', image.width, 'x', image.height);
         console.log('선택 영역 (화면):', pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height);
         console.log('선택 영역 (원본):', sourceX, sourceY, sourceWidth, sourceHeight);
-        
+
         // 이미지 그리기
         ctx.drawImage(
             image,
@@ -234,7 +230,7 @@ export default function ProfilePage() {
             outputSize,
             outputSize
         );
-        
+
         // 투명한 배경 설정을 위해 globalCompositeOperation 사용
         ctx.globalCompositeOperation = 'destination-in';
         ctx.fillStyle = '#ffffff';
@@ -242,7 +238,7 @@ export default function ProfilePage() {
         ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, 2 * Math.PI);
         ctx.closePath();
         ctx.fill();
-        
+
         // 캔버스를 Blob으로 변환
         return new Promise((resolve, reject) => {
             canvas.toBlob(
@@ -265,35 +261,68 @@ export default function ProfilePage() {
             toast.error('이미지 크롭에 실패했습니다.');
             return;
         }
-        
+
         try {
+            setIsImageUploading(true);
+
             // 크롭된 이미지 생성
             const croppedBlob = await getCroppedImg(imgRef.current, completedCrop);
-            
+
             // Blob에서 File 객체 생성
             const croppedFile = new File(
-                [croppedBlob], 
-                imageFile?.name || 'cropped-image.jpg', 
+                [croppedBlob],
+                imageFile?.name || 'cropped-image.jpg',
                 { type: 'image/png' } // PNG 형식으로 변경
             );
-            
+
             // 크롭된 이미지로 상태 업데이트
             setImageFile(croppedFile);
-            
+
             // 미리보기 URL 생성
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewUrl(reader.result as string);
             };
             reader.readAsDataURL(croppedBlob);
-            
+
             // 모달 닫기
             setShowCropModal(false);
-            // 크롭 완료 후 상태 초기화하지 않고 이미지 URL 유지
-            // setSrcImg(null);
+
+            // 이미지 즉시 업로드 및 프로필 업데이트
+            const imageUrl = await uploadImage(croppedFile);
+            if (!imageUrl) {
+                throw new Error('이미지 업로드에 실패했습니다.');
+            }
+
+            // 프로필 업데이트 API 호출
+            const response = await fetch(`/api/users/${session?.user?.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageUrl,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('프로필 이미지 업데이트에 실패했습니다.');
+            }
+
+            const updatedProfile = await response.json();
+            setProfile(updatedProfile);
+
+            // 세션 업데이트
+            await updateSession();
+
+            // 성공 메시지
+            toast.success('프로필 이미지가 업데이트되었습니다.');
+
         } catch (error) {
-            console.error('이미지 크롭 중 오류:', error);
-            toast.error('이미지 크롭에 실패했습니다.');
+            console.error('이미지 크롭 또는 업로드 중 오류:', error);
+            toast.error('이미지 처리에 실패했습니다.');
+        } finally {
+            setIsImageUploading(false);
         }
     };
 
@@ -333,7 +362,7 @@ export default function ProfilePage() {
         try {
             // 파일 이름을 고유하게 만들기
             const fileName = `profile-images/${session?.user?.id}_${Date.now()}_${file.name.replace(/\s+/g, '-')}`;
-            
+
             // Supabase Storage에 이미지 업로드
             const { error } = await supabase.storage
                 .from('profile-images')
@@ -374,7 +403,7 @@ export default function ProfilePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
@@ -382,25 +411,14 @@ export default function ProfilePage() {
         setIsLoading(true);
 
         try {
-            let imageUrl = null;
-            
-            // 이미지 파일이 있으면 업로드
-            if (imageFile) {
-                imageUrl = await uploadImage(imageFile);
-                if (!imageUrl) {
-                    throw new Error('이미지 업로드에 실패했습니다.');
-                }
-            }
-
-            // 프로필 업데이트 API 호출
+            // 프로필 업데이트 API 호출 - 이름만 업데이트
             const response = await fetch(`/api/users/${session?.user?.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    name: newName,
-                    ...(imageUrl && { image: imageUrl }),
+                    name: newName
                 }),
             });
 
@@ -410,15 +428,12 @@ export default function ProfilePage() {
 
             const updatedProfile = await response.json();
             setProfile(updatedProfile);
-            
-            // 이미지 파일 상태 초기화
-            setImageFile(null);
-            
+
             // 세션 업데이트
             await updateSession();
-            
+
             // 성공 메시지
-            toast.success('프로필이 업데이트되었습니다.');
+            toast.success('이름이 업데이트되었습니다.');
         } catch (error) {
             console.error('프로필 업데이트 중 오류:', error);
             toast.error('프로필 업데이트에 실패했습니다.');
@@ -438,7 +453,7 @@ export default function ProfilePage() {
             }
 
             // setCoverImageFile(file);
-            
+
             // 미리보기 URL 생성
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -477,11 +492,11 @@ export default function ProfilePage() {
     };
 
     // 페어링 모달 열기 함수 - UI 버튼에서 호출
-    // const openPairingModal = () => {
-    //   setShowPairingModal(true);
-    //   // 브라우저 히스토리에 상태 추가
-    //   window.history.pushState({ pairing: true }, '');
-    // };
+    const openPairingModal = () => {
+        setShowPairingModal(true);
+        // 브라우저 히스토리에 상태 추가
+        window.history.pushState({ pairing: true }, '');
+    };
 
     // 페어링 모달 닫기
     const closePairingModal = () => {
@@ -497,7 +512,7 @@ export default function ProfilePage() {
         };
 
         window.addEventListener('popstate', handlePopState);
-        
+
         return () => {
             window.removeEventListener('popstate', handlePopState);
         };
@@ -505,7 +520,7 @@ export default function ProfilePage() {
 
     // 질문 답변 업데이트
     const updateQuestionAnswer = (id: number, answer: string) => {
-        setPairingQuestions(prev => 
+        setPairingQuestions(prev =>
             prev.map(q => q.id === id ? { ...q, answer } : q)
         );
     };
@@ -539,7 +554,7 @@ export default function ProfilePage() {
     const addNewQuestion = () => {
         const newId = Math.max(...pairingQuestions.map(q => q.id), 0) + 1;
         setPairingQuestions(prev => [
-            ...prev, 
+            ...prev,
             { id: newId, question: '', answer: '' }
         ]);
         setCurrentQuestionIndex(pairingQuestions.length);
@@ -556,14 +571,13 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen">
             <Sidebar />
-            <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
             {/* 이미지 크롭 모달 */}
             {showCropModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
                     <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
                         <h3 className="text-lg font-semibold mb-4">프로필 이미지 편집</h3>
-                        
+
                         <div className="mb-4">
                             <p className="text-sm text-gray-400 mb-2">원하는 영역을 선택하세요</p>
                             {srcImg && (
@@ -585,7 +599,7 @@ export default function ProfilePage() {
                                 </ReactCrop>
                             )}
                         </div>
-                        
+
                         <div className="flex justify-end gap-2 mt-4">
                             <button
                                 type="button"
@@ -640,7 +654,7 @@ export default function ProfilePage() {
                                     <span className="text-sm text-gray-400">
                                         질문 {currentQuestionIndex + 1} / {pairingQuestions.length}
                                     </span>
-                                    <button 
+                                    <button
                                         onClick={addNewQuestion}
                                         className="text-sm text-indigo-400 hover:underline"
                                     >
@@ -684,11 +698,10 @@ export default function ProfilePage() {
                                     <button
                                         onClick={goToPrevQuestion}
                                         disabled={currentQuestionIndex === 0}
-                                        className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                                            currentQuestionIndex === 0 
-                                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                                                : 'bg-gray-700 hover:bg-gray-600 text-white'
-                                        }`}
+                                        className={`px-4 py-2 rounded-lg flex items-center gap-2 ${currentQuestionIndex === 0
+                                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            : 'bg-gray-700 hover:bg-gray-600 text-white'
+                                            }`}
                                     >
                                         <ArrowLeft className="w-4 h-4" />
                                         이전
@@ -711,19 +724,21 @@ export default function ProfilePage() {
                 </div>
             )}
 
-            <div className="sm:pl-[80px] lg:pl-[240px]">
-                <div className="max-w-4xl mx-auto px-3 py-6 sm:px-4 sm:py-8 md:px-6 lg:px-8">
-                    {/* 헤더 */}
-                    <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
-                        <Link
-                            href="/"
-                            className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
-                        >
-                            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="font-medium text-sm sm:text-base">뒤로가기</span>
-                        </Link>
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">프로필 설정</h1>
-                        <div className="w-[72px] sm:w-[89px]"></div>
+            <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+                <div className="w-full max-w-6xl pt-12 md:pt-8">
+                    {/* Header */}
+                    <div className="flex flex-col gap-4 mb-8">
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                프로필
+                            </span>
+                            <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                관리
+                            </span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <p className="text-gray-400">나만의 페어링 BOOK을 통해 자신을 표현해보세요.</p>
+                        </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 mt-4 sm:mt-6">
@@ -747,7 +762,7 @@ export default function ProfilePage() {
                                                     <User className="w-16 h-16 text-gray-500" />
                                                 </div>
                                             )}
-                                            
+
                                             {isImageUploading && (
                                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
                                                     <Loader2 className="w-8 h-8 animate-spin text-white" />
@@ -766,7 +781,7 @@ export default function ProfilePage() {
                                                     disabled={isImageUploading}
                                                 />
                                             </label>
-                                            
+
                                             {/* 재크롭 버튼 - 이미지가 있을 때만 표시 */}
                                             {imageFile && (
                                                 <button
@@ -800,7 +815,7 @@ export default function ProfilePage() {
                                         {imageFile && <span> 크롭 아이콘을 눌러 영역을 다시 선택할 수 있습니다.</span>}
                                     </p>
                                 </div>
-                                
+
                                 {/* 개인 정보 */}
                                 <div className="flex-1 space-y-5">
                                     {/* 이름 입력 필드 */}
@@ -808,21 +823,33 @@ export default function ProfilePage() {
                                         <label htmlFor="name" className="block text-sm font-medium mb-2 text-gray-300">
                                             이름
                                         </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            value={newName}
-                                            onChange={(e) => {
-                                                setNewName(e.target.value);
-                                                if (errors.name) {
-                                                    setErrors({ ...errors, name: undefined });
-                                                }
-                                            }}
-                                            className={`w-full px-4 py-3 bg-gray-800/80 border rounded-lg focus:ring-2 placeholder-gray-400 focus:outline-none text-sm sm:text-base ${
-                                                errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
-                                            }`}
-                                            placeholder="이름을 입력하세요"
-                                        />
+                                        <div className="flex gap-2 w-full md:w-96">
+                                            <input
+                                                type="text"
+                                                id="name"
+                                                value={newName}
+                                                onChange={(e) => {
+                                                    setNewName(e.target.value);
+                                                    if (errors.name) {
+                                                        setErrors({ ...errors, name: undefined });
+                                                    }
+                                                }}
+                                                className={`flex-1 px-4 py-3 bg-gray-800/80 border rounded-lg focus:ring-2 placeholder-gray-400 focus:outline-none text-sm sm:text-base ${errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
+                                                    }`}
+                                                placeholder="이름을 입력하세요"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isLoading ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    '저장'
+                                                )}
+                                            </button>
+                                        </div>
                                         {errors.name && (
                                             <div className="flex items-center gap-1 mt-2 text-red-400 text-xs sm:text-sm">
                                                 <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -862,19 +889,6 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         )}
-
-                        {/* 저장 버튼 */}
-                        <button
-                            type="submit"
-                            disabled={isLoading || isImageUploading}
-                            className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                            ) : (
-                                '변경사항 저장'
-                            )}
-                        </button>
                     </form>
 
                     {/* 페어링 북 섹션 - 제목과 소개 */}
@@ -892,7 +906,7 @@ export default function ProfilePage() {
                     {/* 페어링 북 페이지 1 - 독립적인 영역으로 구성 */}
                     <div className="mb-10">
                         <div className="rounded-xl overflow-hidden shadow-2xl border border-indigo-100 dark:border-gray-700">
-                            <PairingBookPage1 
+                            <PairingBookPage1
                                 question="1. 이성을 설레게 하는 나의 매력"
                                 answer={pairingQuestions[0]?.answer || "친절하고 사소한 것에 감동을 잘하는 것이 매력이며\n상대방의 장점을 잘 알고\n상대의 이야기를 잘 들어줍니다.\n\n외적으로는 웃음이 많고 미소가 이쁘다고 생각합니다."}
                                 sparklesImage="/images/sparkles.svg"
@@ -912,7 +926,7 @@ export default function ProfilePage() {
                     {/* 페어링 북 페이지 2 - 독립적인 영역으로 구성 */}
                     <div className="mb-10">
                         <div className="rounded-xl overflow-hidden shadow-2xl border border-amber-100 dark:border-gray-700">
-                            <PairingBookPage2 
+                            <PairingBookPage2
                                 question="2. 나의 하루 그리고 나의 휴일"
                                 answer={pairingQuestions[1]?.answer || "아침 조깅을 하고, 강아지랑 산책을 하고 돌아와\n홈케어로 피부 관리를 합니다.\n\n하루 일정 끝에는 스트레칭을 통해\n하루 동안 뭉쳤던 근육을 꼭 풀어줍니다."}
                                 sunImage="/images/sun.svg"
@@ -929,167 +943,166 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                     {/* 북 커버 섹션 */}
-                     <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
-                            <div className="flex flex-wrap items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold">북 커버 설정</h2>
-                                {/* <button
-                                    type="button"
-                                    onClick={openPairingModal}
-                                    className="mt-2 sm:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors flex items-center gap-2"
+                    {/* 북 커버 섹션 */}
+                    <div className="bg-gray-800/30 rounded-xl p-4 sm:p-6 border border-gray-700/50 shadow-lg">
+                        <div className="flex flex-wrap items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">북 커버 설정</h2>
+                            <button
+                                type="button"
+                                onClick={openPairingModal}
+                                className="mt-2 sm:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                페어링 BOOK 작성하기
+                            </button>
+                        </div>
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                            {/* 북 커버 미리보기 */}
+                            <div className="flex-1 flex justify-center">
+                                <div
+                                    className="w-80 h-[400px] rounded-lg shadow-2xl relative overflow-hidden flex flex-col justify-between"
+                                    style={{ backgroundColor: bookCover.color }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                    페어링 BOOK 작성하기
-                                </button> */}
+                                    {/* 책 표지 그림자 효과 */}
+                                    <div className="absolute inset-0 shadow-inner pointer-events-none z-10"></div>
+
+                                    {/* 책 상단 제목 */}
+                                    <div className="p-4 text-center mt-6">
+                                        <div className="text-xs text-gray-600 mb-1">히트메이킹</div>
+                                        <h3 className="text-2xl font-bold text-gray-800 mb-1 font-serif">{bookCover.title}</h3>
+                                    </div>
+
+                                    {/* 책 중앙 이미지 */}
+                                    <div className="flex-1 flex items-center justify-center p-6">
+                                        {bookCover.coverImage ? (
+                                            <div className="w-48 h-48 relative border border-gray-300">
+                                                <Image
+                                                    src={bookCover.coverImage}
+                                                    alt="북 커버 이미지"
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="w-48 h-48 border border-gray-300 flex items-center justify-center">
+                                                <p className="text-gray-500">이미지를 선택해주세요</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 책 하단 저자 */}
+                                    <div className="p-4 text-center mb-6">
+                                        <p className="text-sm text-gray-700 font-medium">{bookCover.author}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-                                {/* 북 커버 미리보기 */}
-                                <div className="flex-1 flex justify-center">
-                                    <div 
-                                        className="w-80 h-[400px] rounded-lg shadow-2xl relative overflow-hidden flex flex-col justify-between"
-                                        style={{ backgroundColor: bookCover.color }}
-                                    >
-                                        {/* 책 표지 그림자 효과 */}
-                                        <div className="absolute inset-0 shadow-inner pointer-events-none z-10"></div>
-                                        
-                                        {/* 책 상단 제목 */}
-                                        <div className="p-4 text-center mt-6">
-                                            <div className="text-xs text-gray-600 mb-1">히트메이킹</div>
-                                            <h3 className="text-2xl font-bold text-gray-800 mb-1 font-serif">{bookCover.title}</h3>
-                                        </div>
-                                        
-                                        {/* 책 중앙 이미지 */}
-                                        <div className="flex-1 flex items-center justify-center p-6">
-                                            {bookCover.coverImage ? (
-                                                <div className="w-48 h-48 relative border border-gray-300">
-                                                    <Image 
-                                                        src={bookCover.coverImage}
-                                                        alt="북 커버 이미지"
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                </div>
+
+                            {/* 북 커버 설정 */}
+                            <div className="flex-1 space-y-4">
+                                {/* 책 제목 */}
+                                <div>
+                                    <label htmlFor="bookTitle" className="block text-sm font-medium mb-2 text-gray-300">
+                                        책 제목
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="bookTitle"
+                                        value={bookCover.title}
+                                        onChange={handleBookTitleChange}
+                                        className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 focus:outline-none text-sm sm:text-base"
+                                        placeholder="책 제목을 입력하세요"
+                                    />
+                                </div>
+
+                                {/* 저자 */}
+                                <div>
+                                    <label htmlFor="bookAuthor" className="block text-sm font-medium mb-2 text-gray-300">
+                                        저자
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="bookAuthor"
+                                        value={bookCover.author}
+                                        onChange={handleBookAuthorChange}
+                                        className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 focus:outline-none text-sm sm:text-base"
+                                        placeholder="저자 이름을 입력하세요"
+                                    />
+                                </div>
+
+                                {/* 책 표지 이미지 */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-300">
+                                        책 표지 이미지
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex items-center justify-center w-32 h-32 border border-dashed border-gray-500 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors overflow-hidden relative">
+                                            {coverPreviewUrl ? (
+                                                <Image
+                                                    src={coverPreviewUrl}
+                                                    alt="커버 이미지 미리보기"
+                                                    fill
+                                                    className="object-cover"
+                                                />
                                             ) : (
-                                                <div className="w-48 h-48 border border-gray-300 flex items-center justify-center">
-                                                    <p className="text-gray-500">이미지를 선택해주세요</p>
+                                                <div className="flex flex-col items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    <span className="text-xs text-gray-400">이미지 추가</span>
                                                 </div>
                                             )}
-                                        </div>
-                                        
-                                        {/* 책 하단 저자 */}
-                                        <div className="p-4 text-center mb-6">
-                                            <p className="text-sm text-gray-700 font-medium">{bookCover.author}</p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleBookCoverImageChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        <div className="flex-1">
+                                            <p className="text-sm text-gray-400">책 표지에 표시될 이미지를 선택하세요.</p>
+                                            <p className="text-xs text-gray-500 mt-1">PNG, JPG 형식 (최대 5MB)</p>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {/* 북 커버 설정 */}
-                                <div className="flex-1 space-y-4">
-                                    {/* 책 제목 */}
-                                    <div>
-                                        <label htmlFor="bookTitle" className="block text-sm font-medium mb-2 text-gray-300">
-                                            책 제목
+
+                                {/* 책 표지 색상 */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-300">
+                                        책 표지 색상
+                                    </label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {bookColors.map((color) => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                onClick={() => handleBookColorChange(color)}
+                                                className={`w-8 h-8 rounded-full transition-all ${bookCover.color === color ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-110'}`}
+                                                style={{ backgroundColor: color }}
+                                                title={color}
+                                            />
+                                        ))}
+                                        <label
+                                            className="w-8 h-8 rounded-full flex items-center justify-center border border-gray-500 cursor-pointer hover:scale-110 transition-all"
+                                            title="사용자 지정 색상"
+                                        >
+                                            <input
+                                                type="color"
+                                                value={bookCover.color}
+                                                onChange={(e) => handleBookColorChange(e.target.value)}
+                                                className="opacity-0 absolute"
+                                            />
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                            </svg>
                                         </label>
-                                        <input
-                                            type="text"
-                                            id="bookTitle"
-                                            value={bookCover.title}
-                                            onChange={handleBookTitleChange}
-                                            className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 focus:outline-none text-sm sm:text-base"
-                                            placeholder="책 제목을 입력하세요"
-                                        />
                                     </div>
-                                    
-                                    {/* 저자 */}
-                                    <div>
-                                        <label htmlFor="bookAuthor" className="block text-sm font-medium mb-2 text-gray-300">
-                                            저자
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="bookAuthor"
-                                            value={bookCover.author}
-                                            onChange={handleBookAuthorChange}
-                                            className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 focus:outline-none text-sm sm:text-base"
-                                            placeholder="저자 이름을 입력하세요"
-                                        />
-                                    </div>
-                                    
-                                    {/* 책 표지 이미지 */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-300">
-                                            책 표지 이미지
-                                        </label>
-                                        <div className="flex items-center gap-3">
-                                            <label className="flex items-center justify-center w-32 h-32 border border-dashed border-gray-500 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors overflow-hidden relative">
-                                                {coverPreviewUrl ? (
-                                                    <Image
-                                                        src={coverPreviewUrl}
-                                                        alt="커버 이미지 미리보기"
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex flex-col items-center">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                        </svg>
-                                                        <span className="text-xs text-gray-400">이미지 추가</span>
-                                                    </div>
-                                                )}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleBookCoverImageChange}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                            <div className="flex-1">
-                                                <p className="text-sm text-gray-400">책 표지에 표시될 이미지를 선택하세요.</p>
-                                                <p className="text-xs text-gray-500 mt-1">PNG, JPG 형식 (최대 5MB)</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* 책 표지 색상 */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-300">
-                                            책 표지 색상
-                                        </label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {/* {bookColors.map((color) => (
-                                                <button
-                                                    key={color}
-                                                    type="button"
-                                                    onClick={() => handleBookColorChange(color)}
-                                                    className={`w-8 h-8 rounded-full transition-all ${bookCover.color === color ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-110'}`}
-                                                    style={{ backgroundColor: color }}
-                                                    title={color}
-                                                />
-                                            ))} */}
-                                            <label 
-                                                className="w-8 h-8 rounded-full flex items-center justify-center border border-gray-500 cursor-pointer hover:scale-110 transition-all"
-                                                title="사용자 지정 색상"
-                                            >
-                                                <input
-                                                    type="color"
-                                                    value={bookCover.color}
-                                                    onChange={(e) => handleBookColorChange(e.target.value)}
-                                                    className="opacity-0 absolute"
-                                                />
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                                                </svg>
-                                            </label>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-2">선택한 색상: {bookCover.color}</p>
-                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">선택한 색상: {bookCover.color}</p>
                                 </div>
                             </div>
                         </div>
-
+                    </div>
                 </div>
             </div>
         </div>

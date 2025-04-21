@@ -103,32 +103,24 @@ export default function Sidebar() {
           <Bookmark className="w-6 h-6 flex-shrink-0" />
           <span className="text-sm">저장</span>
         </Link> */}
-
-        {isAuthenticated && (
-          <Link
-            href="/profile"
-            className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/profile')
-              ? 'bg-indigo-500/20 text-indigo-400'
-              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
-              }`}
-          >
-            <User className="w-6 h-6 flex-shrink-0" />
-            <span className="text-sm">프로필</span>
-          </Link>
-        )}
       </div>
 
       {/* 하단 메뉴 */}
       <div className="mt-auto">
-        {/* {isAuthenticated && (
+        {isAuthenticated && (
           <Link
-            href="/new"
-            className="px-3 py-3 rounded-lg flex items-center gap-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/20 mb-4"
+            href="/profile"
+            className="w-full flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
           >
-            <PenSquare className="w-6 h-6 flex-shrink-0" />
-            <span className="text-sm">새 글</span>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
+              <User className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-base font-medium">내 프로필</span>
+              <span className="text-sm text-gray-400">프로필 관리</span>
+            </div>
           </Link>
-        )} */}
+        )}
 
         <div className="relative" ref={moreMenuRef}>
           <button

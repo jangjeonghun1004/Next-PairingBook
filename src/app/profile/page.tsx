@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import MobileHeader from '@/components/MobileHeader';
+import HamburgerMenu from '@/components/HamburgerMenu';
 
 interface UserProfile {
     id: string;
@@ -19,7 +21,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-    // const router = useRouter();
+    const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const { data: session, update: updateSession, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
     const [isImageUploading, setIsImageUploading] = useState(false);
@@ -435,6 +437,11 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen">
             <Sidebar />
+            {/* Mobile Header */}
+            <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
+
+            {/* Hamburger Menu */}
+            <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
 
             {/* 이미지 크롭 모달 */}
             {showCropModal && (

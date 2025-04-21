@@ -11,6 +11,7 @@ import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import MobileHeader from '@/components/MobileHeader';
 import HamburgerMenu from '@/components/HamburgerMenu';
+import Loading from '@/components/Loading';
 
 interface UserProfile {
     id: string;
@@ -495,6 +496,8 @@ export default function ProfilePage() {
 
             <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
                 <div className="w-full max-w-6xl pt-12 md:pt-8">
+                    {isLoading && <Loading />}
+
                     {/* Header */}
                     <div className="flex flex-col gap-4 mb-8">
                         <div className="flex items-baseline gap-1">
@@ -606,6 +609,10 @@ export default function ProfilePage() {
                                                 className={`flex-1 px-4 py-3 bg-gray-800/80 border rounded-lg focus:ring-2 placeholder-gray-400 focus:outline-none text-sm sm:text-base ${errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
                                                     }`}
                                                 placeholder="이름을 입력하세요"
+                                                inputMode="text"
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                spellCheck="false"
                                             />
                                             <button
                                                 type="submit"

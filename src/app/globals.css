@@ -113,6 +113,13 @@ body {
   *::-webkit-scrollbar:horizontal {
     display: none;
   }
+
+  /* 모바일에서 폼 필드 자동 확대 방지 */
+  input, textarea, select {
+    font-size: 16px !important; /* iOS에서 16px 이상이면 확대되지 않음 */
+    transform: scale(1); /* 이렇게 하면 입력 필드가 눌리는 순간에 확대되지 않음 */
+    transform-origin: left top;
+  }
 }
 
 /* 텍스트 래핑 유틸리티 */

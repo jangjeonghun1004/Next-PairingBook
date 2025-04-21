@@ -606,13 +606,15 @@ export default function ProfilePage() {
                                                         setErrors({ ...errors, name: undefined });
                                                     }
                                                 }}
-                                                className={`flex-1 px-4 py-3 bg-gray-800/80 border rounded-lg focus:ring-2 placeholder-gray-400 focus:outline-none text-sm sm:text-base ${errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
+                                                className={`flex-1 px-4 py-3 bg-gray-800/80 border rounded-lg focus:ring-2 placeholder-gray-400 focus:outline-none text-base ${errors.name ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-indigo-500"
                                                     }`}
                                                 placeholder="이름을 입력하세요"
                                                 inputMode="text"
-                                                autoComplete="off"
+                                                autoComplete="name"
                                                 autoCorrect="off"
                                                 spellCheck="false"
+                                                style={{ fontSize: "16px" }}
+                                                data-lpignore="true"
                                             />
                                             <button
                                                 type="submit"

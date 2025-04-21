@@ -316,7 +316,7 @@ export default function DiscussionsPage() {
       <NewPostButton isMenuOpen={isMenuOpen} path="/discussions/new" />
 
       <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
-        <div className="w-full max-w-6xl pt-12 md:pt-8">
+        <div className="w-full max-w-6xl pt-20 md:pt-8">
           {/* Header */}
           <div className="flex flex-col gap-4 mb-8">
             <div className="flex items-baseline gap-1">

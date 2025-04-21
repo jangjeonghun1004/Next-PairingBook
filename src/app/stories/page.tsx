@@ -46,6 +46,8 @@ export default function StoriesPage() {
   const [savedScrollPosition, setSavedScrollPosition] = useState(0);
   // 메인 컨테이너 ref 추가
   const mainContainerRef = useRef<HTMLDivElement>(null);
+  // MobileHeader 표시 여부를 관리하는 상태 추가
+  const [showMobileHeader, setShowMobileHeader] = useState(true);
 
   // 브라우저 뒤로가기 처리
   useEffect(() => {
@@ -85,6 +87,8 @@ export default function StoriesPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedStory(null);
+    // 모달이 닫힐 때 MobileHeader 다시 표시
+    setShowMobileHeader(true);
     
     // 약간의 지연 후 저장된 스크롤 위치로 복원
     setTimeout(() => {
@@ -102,6 +106,8 @@ export default function StoriesPage() {
     setSelectedStory(story);
     setCurrentImageIndex(imageIndex);
     setIsModalOpen(true);
+    // 모달이 열릴 때 MobileHeader 숨김
+    setShowMobileHeader(false);
   };
 
   // 클라이언트 사이드에서만 데이터 로드
@@ -252,14 +258,17 @@ export default function StoriesPage() {
 
   return (
     <div className="min-h-screen">
-      {/* UI 컴포넌트 */}
-      <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
+      {/* 모바일 헤더 - showMobileHeader 상태를 기반으로 조건부 렌더링 */}
+      {showMobileHeader && <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />}
+      
+      {/* 햄버거 메뉴 */}
       <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
+      
       <Sidebar/>
       <NewPostButton isMenuOpen={isMenuOpen} path="/stories/new" />
 
       <main ref={mainContainerRef} className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8">
-        <section className="w-full max-w-6xl pt-12 md:pt-8">
+        <section className="w-full max-w-6xl pt-20 md:pt-8">
           {/* 갤러리 그리드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-2 auto-rows-auto max-w-full grid-flow-dense">
             {isClient &&

@@ -1,13 +1,15 @@
 'use client';
 
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, ArrowRight, User, Flag, Shield, X, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, ArrowRight, User, Flag, Shield, X, MoreHorizontal } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import StoryDetailModal from "./StoryDetailModal";
 import Logo from "./Logo";
+import Image from "next/image";
 
 interface StoryCardProps {
   id: string;
   author: string;
+  authorImage: string;
   authorId: string;
   timeAgo: string;
   title: string;
@@ -22,6 +24,7 @@ interface StoryCardProps {
 export default function StoryCard({
   id,
   author,
+  authorImage,
   authorId,
   timeAgo,
   title,
@@ -38,9 +41,10 @@ export default function StoryCard({
   const [showToast, setShowToast] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [showFullContent, setShowFullContent] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
-  // const [hasOverflow, setHasOverflow] = useState(false);
 
   // 초기 팔로우 상태 확인
   useEffect(() => {
@@ -68,10 +72,14 @@ export default function StoryCard({
     }
   };
 
+  // 콘텐츠 오버플로우 확인
   useEffect(() => {
     if (contentRef.current) {
-      // const element = contentRef.current;
-      // setHasOverflow(element.scrollHeight > element.clientHeight);
+      const element = contentRef.current;
+      // 텍스트가 2줄을 초과하는지 확인
+      const lineHeight = parseInt(getComputedStyle(element).lineHeight);
+      const maxHeight = lineHeight * 2; // 2줄
+      setHasOverflow(element.scrollHeight > maxHeight);
     }
   }, [content]);
 
@@ -116,7 +124,7 @@ export default function StoryCard({
   // 팔로우/언팔로우 토글 함수
   const handleFollowToggle = async () => {
     if (!authorId) return;
-    
+
     setIsLoading(true);
     try {
       const response = await fetch('/api/users/follow', {
@@ -130,7 +138,7 @@ export default function StoryCard({
       if (response.ok) {
         const data = await response.json();
         setIsFollowing(data.isFollowing);
-        
+
         // 팔로우/언팔로우 성공 메시지 표시
         setShowToast(true);
         setTimeout(() => {
@@ -144,6 +152,11 @@ export default function StoryCard({
     }
   };
 
+  const toggleContentDisplay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowFullContent(!showFullContent);
+  };
+
   return (
     <>
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-gray-800/70 transition-colors">
@@ -151,20 +164,29 @@ export default function StoryCard({
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
-              <span className="text-sm font-medium">{author[0]}</span>
+              {authorImage ? (
+                <Image
+                  src={authorImage}
+                  alt={'작성자'}
+                  width={24}
+                  height={24}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-medium">{author[0]}</span>
+              )}
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <div className="font-medium">{author}</div>
                 {!hideFollowButton && (
-                  <button 
+                  <button
                     onClick={handleFollowToggle}
                     disabled={isLoading}
-                    className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
-                      isFollowing 
-                        ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' 
+                    className={`text-xs px-2 py-0.5 rounded-full transition-colors ${isFollowing
+                        ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                         : 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20'
-                    }`}
+                      }`}
                   >
                     {isLoading ? '로딩 중...' : isFollowing ? '팔로잉' : '팔로우'}
                   </button>
@@ -172,10 +194,10 @@ export default function StoryCard({
               </div>
             </div>
           </div>
-          
+
           {/* 좌측 더보기 메뉴 */}
           <div className="relative">
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
@@ -184,9 +206,9 @@ export default function StoryCard({
             >
               <MoreHorizontal className="w-5 h-5 text-gray-400" />
             </button>
-            
+
             {isMenuOpen && (
-              <div 
+              <div
                 ref={menuRef}
                 className="absolute top-0 right-0 w-48 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-700 py-2 z-50"
               >
@@ -211,8 +233,8 @@ export default function StoryCard({
         </div>
 
         {/* 이미지 */}
-        <div 
-          className="relative aspect-square cursor-pointer" 
+        <div
+          className="relative aspect-square cursor-pointer"
           onClick={handleImageClick}
         >
           <img
@@ -220,47 +242,20 @@ export default function StoryCard({
             alt={title}
             className="w-full h-full object-cover"
           />
-          
+
           {/* 이미지 인디케이터 */}
           {images.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
               {images.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    index === currentImageIndex
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex
                       ? "bg-white w-2.5"
                       : "bg-white/50"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
-          )}
-
-          {/* 이미지 네비게이션 버튼 */}
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={handlePrevImage}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleNextImage}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </>
-          )}
-
-          {/* 클릭 영역 가이드 (선택사항) */}
-          {images.length > 1 && (
-            <>
-              <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            </>
           )}
         </div>
 
@@ -276,9 +271,23 @@ export default function StoryCard({
               <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
-          <p className="text-sm text-gray-300 line-clamp-2 mb-4">
-            {content}
-          </p>
+          <div className="text-sm text-gray-300 mb-4">
+            <p 
+              ref={contentRef} 
+              className={showFullContent ? "" : "line-clamp-2"}
+            >
+              {content}
+            </p>
+            {hasOverflow && (
+              <button
+                onClick={toggleContentDisplay}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mt-1 flex items-center gap-0.5"
+              >
+                <span>{showFullContent ? "접기" : "더보기"}</span>
+                {!showFullContent && <ArrowRight className="w-3 h-3" />}
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-4 text-gray-400">
             <div className="flex items-center gap-1">
               <Heart className="w-4 h-4" />
@@ -300,7 +309,7 @@ export default function StoryCard({
           <div className="relative">
             {/* 배경 그라데이션 애니메이션 */}
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg blur-xl opacity-50 animate-gradient-x"></div>
-            
+
             {/* 메시지 컨테이너 */}
             <div className="relative bg-gray-800/90 backdrop-blur-sm text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-bounce-in">
               <div className="animate-spin-slow">
@@ -309,7 +318,7 @@ export default function StoryCard({
               <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 {isFollowing ? '팔로우 되었습니다.' : '팔로우가 취소되었습니다.'}
               </span>
-              <button 
+              <button
                 onClick={() => setShowToast(false)}
                 className="p-1 hover:bg-gray-700/50 rounded-full transition-colors"
               >
@@ -337,39 +346,6 @@ export default function StoryCard({
           currentImageIndex,
         }}
       />
-
-      <style jsx global>{`
-        @keyframes gradient-x {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes bounce-in {
-          0% { transform: scale(0.3); opacity: 0; }
-          50% { transform: scale(1.05); opacity: 1; }
-          70% { transform: scale(0.9); }
-          100% { transform: scale(1); }
-        }
-        
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        
-        .animate-gradient-x {
-          animation: gradient-x 3s ease infinite;
-          background-size: 200% 200%;
-        }
-        
-        .animate-bounce-in {
-          animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-        
-        .animate-spin-slow {
-          animation: spin-slow 3s linear infinite;
-        }
-      `}</style>
     </>
   );
 } 

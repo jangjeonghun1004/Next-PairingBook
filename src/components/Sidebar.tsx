@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookOpen, Bookmark, User, MessageSquare, Menu, Settings, Activity, Moon, HelpCircle, LogOut, LogIn } from "lucide-react";
+import { Home, BookOpen, User, MessageSquare, Menu, LogOut, LogIn, Edit } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -138,46 +138,27 @@ export default function Sidebar() {
           {showMoreMenu && (
             <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 z-20">
               <Link
-                href="/settings"
+                href="/stories/manage"
                 className="px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
               >
-                <Settings className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">설정</span>
+                <BookOpen className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">이야기 관리</span>
               </Link>
 
-              {isAuthenticated && (
-                <Link
-                  href="/activity"
-                  className="px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
-                >
-                  <Activity className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">활동</span>
-                </Link>
-              )}
-
-              {isAuthenticated && (
-                <Link
-                  href="/saved"
-                  className="px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
-                >
-                  <Bookmark className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">저장된 항목</span>
-                </Link>
-              )}
-
-              <button
-                className="w-full px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
-              >
-                <Moon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">테마 변경</span>
-              </button>
-
               <Link
-                href="/help"
+                href="/discussions/manage"
                 className="px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
               >
-                <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">도움말</span>
+                <MessageSquare className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">토론 관리</span>
+              </Link>
+
+              <Link
+                href="/comments/manage"
+                className="px-4 py-3 flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                <Edit className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">댓글 관리</span>
               </Link>
 
               <div className="border-t border-gray-700"></div>

@@ -24,8 +24,8 @@ export async function PATCH(
     
     const { status } = await request.json();
     
-    // 요청 검증
-    if (!status || !['approved', 'rejected'].includes(status)) {
+    // 요청 검증 - 'pending' 상태 추가
+    if (!status || !['approved', 'rejected', 'pending', 'APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
       return NextResponse.json(
         { error: '유효하지 않은 상태 값입니다.' },
         { status: 400 }
@@ -52,6 +52,9 @@ export async function PATCH(
       );
     }
     
+    // 상태값 대문자로 표준화
+    const normalizedStatus = status.toUpperCase();
+    
     // 참여자 상태 업데이트
     const updatedParticipant = await prisma.discussionParticipant.update({
       where: {
@@ -59,7 +62,7 @@ export async function PATCH(
         discussionId: discussionId
       },
       data: {
-        status
+        status: normalizedStatus
       }
     });
     

@@ -4,12 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowLeft, User2, Check, Clock, Ban, MoreHorizontal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-// 참여자 상태 타입
-type ParticipantStatus = 'pending' | 'approved' | 'rejected';
+// 참여자 상태 타입 - 대문자로 변경
+type ParticipantStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 // 참여자 타입
 interface Participant {
@@ -70,13 +69,49 @@ export default function DiscussionManagePage() {
         toast.error('토론 생성자만 관리 페이지에 접근할 수 있습니다.');
         return;
       }
+
+      // 참여자 데이터 확인 및 정제
+      console.log('API에서 받은 토론 데이터:', data);
       
+      // participants가 없는 경우 기본값 설정
+      const participants = data.participants || [];
+
+      // 참여자 상태 표준화 및 형식 검증
+      const normalizedParticipants = participants.map((p: {
+        id?: string;
+        userId?: string;
+        name?: string;
+        image?: string | null;
+        status?: string;
+        createdAt?: string;
+      }) => {
+        // 기본적인 참여자 객체 구조 검증
+        if (!p || typeof p !== 'object') {
+          console.error('유효하지 않은 참여자 데이터:', p);
+          return null;
+        }
+
+        // 필수 필드가 없는 경우 대체 값 설정
+        return {
+          id: p.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
+          userId: p.userId || '',
+          name: p.name || '이름 없음',
+          image: p.image || null,
+          status: ((p.status || 'APPROVED') + '').toUpperCase(),
+          createdAt: p.createdAt || new Date().toISOString()
+        };
+      }).filter(Boolean) as Participant[]; // null 값 제거
+      
+      console.log('정제된 참여자 데이터:', normalizedParticipants);
+
       setDiscussion({
         ...data,
+        participants: normalizedParticipants,
         isLoading: false,
         error: null
       });
     } catch (error: unknown) {
+      console.error('토론 정보 로드 중 오류:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
         : '토론 정보를 불러오는 중 오류가 발생했습니다.';
@@ -104,8 +139,21 @@ export default function DiscussionManagePage() {
   // 참여자 상태 변경 함수
   const handleStatusChange = async (participantId: string, newStatus: ParticipantStatus) => {
     try {
+      // 유효성 검사
+      if (!participantId) {
+        toast.error('참여자 ID가 유효하지 않습니다.');
+        return;
+      }
+
+      if (!['APPROVED', 'PENDING', 'REJECTED'].includes(newStatus)) {
+        toast.error('유효하지 않은 상태값입니다.');
+        return;
+      }
+
       setPendingActionId(participantId);
       setDropdownOpen(null);
+      
+      console.log(`참여자 상태 변경 시도: ${participantId}, 새 상태: ${newStatus}`);
       
       const response = await fetch(
         `/api/discussions/${params.id}/participants/${participantId}`,
@@ -118,9 +166,11 @@ export default function DiscussionManagePage() {
         }
       );
       
+      const responseData = await response.json();
+      console.log('상태 변경 응답:', responseData);
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '처리 중 오류가 발생했습니다.');
+        throw new Error(responseData.error || '처리 중 오류가 발생했습니다.');
       }
       
       // 성공적으로 처리된 경우 UI 업데이트
@@ -128,6 +178,7 @@ export default function DiscussionManagePage() {
         ...prev,
         participants: prev.participants.map(participant => {
           if (participant.id === participantId) {
+            console.log(`참여자 ${participantId} 상태 업데이트: ${participant.status} → ${newStatus}`);
             return {
               ...participant,
               status: newStatus
@@ -138,9 +189,9 @@ export default function DiscussionManagePage() {
       }));
       
       const statusMessages = {
-        approved: '참여자를 승인했습니다.',
-        pending: '참여자를 대기 상태로 변경했습니다.',
-        rejected: '참여자를 거절했습니다.'
+        APPROVED: '참여자를 승인했습니다.',
+        PENDING: '참여자를 대기 상태로 변경했습니다.',
+        REJECTED: '참여자를 거절했습니다.'
       };
       
       toast.success(statusMessages[newStatus]);
@@ -179,11 +230,32 @@ export default function DiscussionManagePage() {
     return `${Math.floor(seconds)}초 전`;
   };
 
-  // 상태별 참여자 필터링
-  const pendingParticipants = discussion.participants.filter(p => p.status === 'pending');
-  const approvedParticipants = discussion.participants.filter(p => p.status === 'approved');
-  const rejectedParticipants = discussion.participants.filter(p => p.status === 'rejected');
+  // 상태별 참여자 필터링 - 대문자로 변경 및 안전한 필터링
+  const pendingParticipants = discussion.participants.filter(p => 
+    (p.status || '').toUpperCase() === 'PENDING'
+  );
   
+  const approvedParticipants = discussion.participants.filter(p => 
+    (p.status || '').toUpperCase() === 'APPROVED'
+  );
+  
+  const rejectedParticipants = discussion.participants.filter(p => 
+    (p.status || '').toUpperCase() === 'REJECTED'
+  );
+
+  // 디버깅 정보
+  useEffect(() => {
+    if (!discussion.isLoading && discussion.participants.length > 0) {
+      console.log('참여자 정보:', {
+        '전체 참여자': discussion.participants.length,
+        '대기 중': pendingParticipants.length,
+        '승인됨': approvedParticipants.length,
+        '거절됨': rejectedParticipants.length,
+        '참여자 데이터': discussion.participants
+      });
+    }
+  }, [discussion]);
+
   if (discussion.isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -217,17 +289,21 @@ export default function DiscussionManagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen flex flex-col items-center px-4 pb-8 w-full">
+      <div className="w-full max-w-4xl pt-12 md:pt-8">
+         {/* 헤더 */}
+         <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
+         <button
+              onClick={() => router.back()}
+              className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
+            >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500 absolute left-1/2 transform -translate-x-1/2">참여자 관리</h1>
+        </div>
+
         {/* 헤더 */}
-        <div className="mb-8">
-          <Link 
-            href={`/discussions/${discussion.id}`}
-            className="inline-flex items-center text-indigo-400 hover:text-indigo-300 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" /> 토론으로 돌아가기
-          </Link>
-          
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-lg overflow-hidden">
               <Image 
@@ -239,7 +315,7 @@ export default function DiscussionManagePage() {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold mb-1">{discussion.title} 관리</h1>
+              <h1 className="text-2xl font-bold mb-1">{discussion.title}</h1>
               <p className="text-gray-400">
                 참여자 상태를 관리하고 토론을 운영하세요.
               </p>
@@ -287,7 +363,7 @@ export default function DiscussionManagePage() {
                     </div>
                     <div className="flex gap-2">
                       <button 
-                        onClick={() => handleStatusChange(participant.id, 'approved')}
+                        onClick={() => handleStatusChange(participant.id, 'APPROVED')}
                         disabled={pendingActionId === participant.id}
                         className={`px-3 py-1.5 ${pendingActionId === participant.id ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed' : 'bg-green-500/20 hover:bg-green-500/30 text-green-400'} rounded-lg text-sm transition-colors flex items-center gap-1`}
                       >
@@ -295,7 +371,7 @@ export default function DiscussionManagePage() {
                         {pendingActionId === participant.id ? '처리 중...' : '승인'}
                       </button>
                       <button 
-                        onClick={() => handleStatusChange(participant.id, 'rejected')}
+                        onClick={() => handleStatusChange(participant.id, 'REJECTED')}
                         disabled={pendingActionId === participant.id}
                         className={`px-3 py-1.5 ${pendingActionId === participant.id ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed' : 'bg-red-500/20 hover:bg-red-500/30 text-red-400'} rounded-lg text-sm transition-colors flex items-center gap-1`}
                       >
@@ -354,7 +430,7 @@ export default function DiscussionManagePage() {
                       {dropdownOpen === participant.id && (
                         <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-1 z-10">
                           <button
-                            onClick={() => handleStatusChange(participant.id, 'pending')}
+                            onClick={() => handleStatusChange(participant.id, 'PENDING')}
                             disabled={pendingActionId === participant.id}
                             className="w-full text-left px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700 transition-colors flex items-center gap-2"
                           >
@@ -362,7 +438,7 @@ export default function DiscussionManagePage() {
                             대기 상태로 변경
                           </button>
                           <button
-                            onClick={() => handleStatusChange(participant.id, 'rejected')}
+                            onClick={() => handleStatusChange(participant.id, 'REJECTED')}
                             disabled={pendingActionId === participant.id}
                             className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors flex items-center gap-2"
                           >
@@ -423,7 +499,7 @@ export default function DiscussionManagePage() {
                       {dropdownOpen === participant.id && (
                         <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-1 z-10">
                           <button
-                            onClick={() => handleStatusChange(participant.id, 'approved')}
+                            onClick={() => handleStatusChange(participant.id, 'APPROVED')}
                             disabled={pendingActionId === participant.id}
                             className="w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700 transition-colors flex items-center gap-2"
                           >
@@ -431,7 +507,7 @@ export default function DiscussionManagePage() {
                             승인하기
                           </button>
                           <button
-                            onClick={() => handleStatusChange(participant.id, 'pending')}
+                            onClick={() => handleStatusChange(participant.id, 'PENDING')}
                             disabled={pendingActionId === participant.id}
                             className="w-full text-left px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700 transition-colors flex items-center gap-2"
                           >
@@ -446,23 +522,6 @@ export default function DiscussionManagePage() {
               </div>
             )}
           </div>
-        </div>
-        
-        {/* 하단 버튼 */}
-        <div className="flex justify-between">
-          <Link
-            href={`/discussions/${discussion.id}`}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors"
-          >
-            토론으로 돌아가기
-          </Link>
-          
-          <Link
-            href="/myhome"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-          >
-            마이홈으로 이동
-          </Link>
         </div>
       </div>
     </div>

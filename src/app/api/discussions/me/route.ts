@@ -2,124 +2,210 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Discussion, DiscussionParticipant, User } from '@prisma/client';
+
+type DiscussionWithParticipants = Discussion & {
+  participants: (DiscussionParticipant & {
+    user: Pick<User, 'id' | 'name' | 'image'>;
+  })[];
+  author: Pick<User, 'id' | 'name' | 'image'>;
+};
+
+type ParticipationStatus = {
+  [discussionId: string]: string;
+};
 
 // 내 토론 정보 가져오기 API
 export async function GET() {
   try {
-    // 인증 세션 확인
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
+
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
+        { error: '인증이 필요합니다.' },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-    
-    // 1. 참여 중인 토론 목록 가져오기
-    const discussions = await prisma.discussionParticipant.findMany({
-      where: {
-        userId: userId,
-        status: {
-          in: ["approved", "pending"] // 승인된 참여와 대기 중인 참여 모두 포함
-        }
-      },
-      include: {
-        discussion: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true
-              }
-            },
-            participants: {
-              where: {
-                status: "approved"
-              },
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    image: true
-                  }
-                }
-              },
-              take: 5 // 최대 5명의 참여자만 표시
-            }
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 10 // 더 많은 토론을 가져옵니다
-    });
-    
-    // 2. 내가 생성한 토론의 참여 신청자 목록 가져오기
+    // 내가 작성한 토론 목록
     const myCreatedDiscussions = await prisma.discussion.findMany({
       where: {
-        authorId: userId
+        authorId: session.user.id,
       },
       include: {
         participants: {
           where: {
-            status: "pending"
+            status: 'APPROVED',
           },
           include: {
             user: {
               select: {
                 id: true,
                 name: true,
-                image: true
-              }
-            }
-          }
-        }
+                image: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
-      take: 10
     });
-    
-    // 참여 신청자가 있는 토론만 필터링
-    const discussionsWithPendingRequests = myCreatedDiscussions.filter(
-      discussion => discussion.participants.length > 0
-    );
-    
-    // 데이터 포맷팅 및 반환
-    return NextResponse.json({
-      myDiscussions: discussions.map(d => ({
-        ...d.discussion,
-        participantCount: d.discussion.participants.length,
-        status: d.status
-      })),
-      pendingRequests: discussionsWithPendingRequests.map(d => ({
-        id: d.id,
-        title: d.title,
-        bookTitle: d.bookTitle,
-        bookAuthor: d.bookAuthor,
-        createdAt: d.createdAt,
-        imageUrls: d.imageUrls,
-        pendingParticipants: d.participants.map(p => ({
+
+    // 참여 중인 토론 목록
+    const myDiscussions = await prisma.discussion.findMany({
+      where: {
+        participants: {
+          some: {
+            userId: session.user.id,
+          },
+        },
+        authorId: {
+          not: session.user.id,
+        },
+      },
+      include: {
+        participants: {
+          where: {
+            status: 'APPROVED',
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // 내 참여 상태 조회
+    const myParticipations = await prisma.discussionParticipant.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      select: {
+        discussionId: true,
+        status: true,
+      },
+    });
+
+    console.log('내 참여 상태:', myParticipations);
+
+    // 승인 대기 중인 토론 목록
+    const pendingRequests = await prisma.discussion.findMany({
+      where: {
+        participants: {
+          some: {
+            userId: session.user.id,
+            status: 'PENDING',
+          },
+        },
+      },
+      include: {
+        participants: {
+          where: {
+            status: 'APPROVED',
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // 참여 상태 매핑 함수
+    const mapDiscussionWithStatus = (discussion: DiscussionWithParticipants, statusMap: ParticipationStatus) => {
+      // 기존 값이 없으면 'APPROVED'를 기본값으로 사용
+      const status = statusMap[discussion.id] || 'APPROVED';
+      console.log(`토론 ID ${discussion.id}의 상태:`, status);
+      
+      return {
+        id: discussion.id,
+        title: discussion.title,
+        bookTitle: discussion.bookTitle,
+        imageUrls: discussion.imageUrls,
+        privacy: discussion.privacy,
+        scheduledAt: discussion.scheduledAt,
+        createdAt: discussion.createdAt,
+        author: discussion.author,
+        participants: discussion.participants.map(p => ({
           id: p.id,
-          userId: p.user.id,
-          name: p.user.name,
-          image: p.user.image,
-          requestDate: p.createdAt
-        }))
-      }))
+          user: p.user
+        })),
+        participantCount: discussion.participants.length,
+        status: status,
+      };
+    };
+
+    // 참여 상태 맵 생성
+    const statusMap: ParticipationStatus = {};
+    myParticipations.forEach(p => {
+      statusMap[p.discussionId] = p.status;
     });
-    
+
+    console.log('참여 상태 맵:', statusMap);
+
+    const result = {
+      myCreatedDiscussions: myCreatedDiscussions.map(discussion => 
+        mapDiscussionWithStatus(discussion as DiscussionWithParticipants, statusMap)
+      ),
+      myDiscussions: myDiscussions.map(discussion => 
+        mapDiscussionWithStatus(discussion as DiscussionWithParticipants, statusMap)
+      ),
+      pendingRequests: pendingRequests.map(discussion => 
+        mapDiscussionWithStatus(discussion as DiscussionWithParticipants, statusMap)
+      ),
+    };
+
+    console.log('응답 데이터 요약:', {
+      생성한토론수: result.myCreatedDiscussions.length,
+      참여중인토론수: result.myDiscussions.length,
+      대기중인토론수: result.pendingRequests.length
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('내 토론 정보 가져오기 오류:', error);
+    console.error('토론 데이터 조회 중 오류:', error);
     return NextResponse.json(
-      { error: '토론 정보를 불러오는 중 오류가 발생했습니다.' },
+      { error: '토론 데이터를 불러오는 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }

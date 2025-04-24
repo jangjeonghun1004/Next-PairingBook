@@ -35,7 +35,7 @@ export async function GET(
           },
         } : {
           where: {
-            status: 'approved',
+            status: 'APPROVED',
           },
           include: {
             user: {
@@ -62,17 +62,25 @@ export async function GET(
     let formattedDiscussion;
     
     if (includeParticipants) {
+      // 원본 데이터 로깅
+      console.log('원본 참여자 데이터:', JSON.stringify(discussion.participants, null, 2));
+      
       // 관리 페이지를 위한 포맷 - 모든 참여자 정보를 포함
       formattedDiscussion = {
         ...discussion,
-        participants: discussion.participants.map(p => ({
-          id: p.id,
-          userId: p.user.id,
-          name: p.user.name,
-          image: p.user.image,
-          status: p.status,
-          createdAt: p.createdAt,
-        })),
+        participants: discussion.participants.map(p => {
+          const formatted = {
+            id: p.id,
+            userId: p.user.id,
+            name: p.user.name,
+            image: p.user.image,
+            status: p.status ? p.status.toUpperCase() : 'APPROVED', // 상태를 대문자로 표준화
+            createdAt: p.createdAt,
+          };
+          
+          console.log(`참여자 ${p.id} 포맷팅:`, formatted);
+          return formatted;
+        }),
       };
     } else {
       // 일반 토론 페이지를 위한 포맷 - 승인된 참여자만 포함
@@ -81,10 +89,13 @@ export async function GET(
         participants: discussion.participants.map(p => ({
           id: p.id,
           user: p.user,
+          status: p.status ? p.status.toUpperCase() : 'APPROVED', // 상태를 대문자로 표준화
         })),
       };
     }
 
+    console.log('참여자 개수:', formattedDiscussion.participants.length);
+    
     return NextResponse.json(formattedDiscussion);
   } catch (error) {
     console.error('토론 정보 가져오기 오류:', error);

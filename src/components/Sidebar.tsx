@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookOpen, User, MessageSquare, Menu, LogOut, LogIn, Edit } from "lucide-react";
+import { Home, BookOpen, User, MessageSquare, LogOut, LogIn, Edit, Wrench } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -130,8 +130,8 @@ export default function Sidebar() {
               : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
               }`}
           >
-            <Menu className="w-6 h-6 flex-shrink-0" />
-            <span className="text-sm">더 보기</span>
+            <Wrench className="w-6 h-6 flex-shrink-0" />
+            <span className="text-sm">관리 도구</span>
           </button>
 
           {/* 더 보기 메뉴 */}

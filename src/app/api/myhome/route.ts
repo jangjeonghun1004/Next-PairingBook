@@ -73,6 +73,39 @@ export async function GET() {
       take: 10
     });
     
+    // 각 스토리에 좋아요 카운트와 사용자의 좋아요 여부 추가
+    const storiesWithLikesCount = await Promise.all(
+      recentStories.map(async (story) => {
+        const likesCount = await prisma.userLike.count({
+          where: { storyId: story.id }
+        });
+        
+        const userLike = await prisma.userLike.findFirst({
+          where: { 
+            storyId: story.id,
+            userId: userId
+          }
+        });
+        
+        const commentsCount = await prisma.comment.count({
+          where: { storyId: story.id }
+        });
+        
+        return {
+          id: story.id,
+          title: story.title,
+          content: story.content,
+          category: story.category,
+          image_urls: story.image_urls,
+          createdAt: story.createdAt,
+          author: story.author,
+          likes: likesCount,
+          commentCount: commentsCount,
+          liked: !!userLike // 사용자가 좋아요를 눌렀는지 여부
+        };
+      })
+    );
+    
     // 3. 참여 중인 토론 목록 가져오기
     // const discussions = await prisma.discussionParticipant.findMany({
     //   where: {
@@ -185,7 +218,7 @@ export async function GET() {
     // 데이터 포맷팅 및 반환
     return NextResponse.json({
       followedUsers,
-      recentStories,
+      recentStories: storiesWithLikesCount,
       // myDiscussions: discussions.map(d => ({
       //   ...d.discussion,
       //   participantCount: d.discussion.participants.length,

@@ -161,6 +161,7 @@ export async function GET() {
         id: discussion.id,
         title: discussion.title,
         bookTitle: discussion.bookTitle,
+        bookAuthor: discussion.bookAuthor,
         imageUrls: discussion.imageUrls,
         privacy: discussion.privacy,
         scheduledAt: discussion.scheduledAt,

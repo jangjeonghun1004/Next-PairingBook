@@ -103,7 +103,7 @@ export default function DiscussionManagePage() {
       }).filter(Boolean) as Participant[]; // null 값 제거
       
       console.log('정제된 참여자 데이터:', normalizedParticipants);
-
+      
       setDiscussion({
         ...data,
         participants: normalizedParticipants,
@@ -255,7 +255,7 @@ export default function DiscussionManagePage() {
       });
     }
   }, [discussion]);
-
+  
   if (discussion.isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white p-6">

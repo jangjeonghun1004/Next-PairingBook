@@ -8,11 +8,12 @@ import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import {
   ArrowRight,
-  BookText,
   Users,
   Calendar,
   AlertTriangle,
   LogOut,
+  BookOpen,
+  Pencil,
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import Loading from '@/components/Loading';
@@ -225,7 +226,7 @@ export default function DiscussionsManagePage() {
         <div className="w-full max-w-6xl pt-20 md:pt-8">
 
           {/* Header */}
-          <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col gap-1 mb-8">
             <div className="flex items-baseline gap-1">
               <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                 토론
@@ -234,8 +235,8 @@ export default function DiscussionsManagePage() {
                 관리
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <p className="text-gray-400">내가 참여 중인 토론과 토론 참여 요청을 관리할 수 있습니다.</p>
+            <div className="flex flex-col sm:flex-row">
+              <p className="text-gray-400 text-sm">내가 참여 중인 토론과 토론 참여 요청을 관리할 수 있습니다.</p>
             </div>
           </div>
 
@@ -247,7 +248,15 @@ export default function DiscussionsManagePage() {
             ) : (
               <>
                 {/* 내가 작성한 토론 섹션 */}
-                <MyCreatedDiscussions discussions={data.myCreatedDiscussions} />
+                <MyCreatedDiscussions
+                  discussions={data.myCreatedDiscussions}
+                  onDiscussionDeleted={(deletedId) => {
+                    setData(prev => ({
+                      ...prev,
+                      myCreatedDiscussions: prev.myCreatedDiscussions.filter(d => d.id !== deletedId)
+                    }));
+                  }}
+                />
 
                 {/* 참여 중인 토론 섹션 */}
                 <section className="space-y-4">
@@ -294,8 +303,10 @@ export default function DiscussionsManagePage() {
 
                                   <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
                                   <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                                    <BookText className="w-4 h-4" />
+                                    <BookOpen className="w-4 h-4" />
                                     <span className="line-clamp-1">{discussion.bookTitle}</span>
+                                    <Pencil className="w-4 h-4" />
+                                    <span className="line-clamp-1">{discussion.bookAuthor}</span>
                                   </div>
 
                                   <div className="flex justify-between text-sm text-gray-400">
@@ -407,8 +418,10 @@ export default function DiscussionsManagePage() {
 
                                   <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
                                   <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                                    <BookText className="w-4 h-4" />
+                                    <BookOpen className="w-4 h-4" />
                                     <span className="line-clamp-1">{discussion.bookTitle}</span>
+                                    <Pencil className="w-4 h-4" />
+                                    <span className="line-clamp-1">{discussion.bookAuthor}</span>
                                   </div>
 
                                   <div className="text-xs text-yellow-400/80">

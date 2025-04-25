@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, Trash2, ExternalLink, AlertTriangle, Search, FileText } from 'lucide-react';
+import { Trash2, AlertTriangle, Search, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
-import SearchModal from '@/components/SearchModal';
+import Loading from '@/components/Loading';
+import MobileHeader from '@/components/MobileHeader';
+import HamburgerMenu from '@/components/HamburgerMenu';
 
 interface Comment {
   id: string;
@@ -20,13 +22,26 @@ interface Comment {
   };
 }
 
+interface Pagination {
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export default function CommentsManagePage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const { status } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    totalCount: 0,
+    currentPage: 1,
+    pageSize: 10,
+    totalPages: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
@@ -38,22 +53,23 @@ export default function CommentsManagePage() {
     }
 
     if (status === 'authenticated') {
-      fetchComments();
+      fetchComments(pagination.currentPage, pagination.pageSize);
     }
-  }, [status, router]);
+  }, [status, router, pagination.currentPage, pagination.pageSize]);
 
-  const fetchComments = async () => {
+  const fetchComments = async (page: number, pageSize: number) => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/comments/me');
-      
+      const response = await fetch(`/api/comments/me?page=${page}&pageSize=${pageSize}`);
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || '댓글을 불러오는 중 오류가 발생했습니다.');
       }
-      
+
       const data = await response.json();
-      setComments(data);
+      setComments(data.comments);
+      setPagination(data.pagination);
       setIsLoading(false);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '댓글을 불러오는 중 오류가 발생했습니다.';
@@ -63,23 +79,43 @@ export default function CommentsManagePage() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    setSearchQuery(''); // 페이지 변경 시 검색어 초기화
+    fetchComments(newPage, pagination.pageSize);
+  };
+
   const handleDelete = async (commentId: string) => {
     try {
       setIsDeleting(commentId);
-      
+
       const response = await fetch(`/api/comments/${commentId}`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || '댓글 삭제 중 오류가 발생했습니다.');
       }
-      
+
       // UI에서 삭제된 댓글 제거
       setComments(comments.filter(comment => comment.id !== commentId));
-      toast.success('댓글이 삭제되었습니다.');
+      setPagination(prev => ({
+        ...prev,
+        totalCount: prev.totalCount - 1,
+        totalPages: Math.ceil((prev.totalCount - 1) / prev.pageSize)
+      }));
       
+      // 현재 페이지의 모든 댓글이 삭제되었다면 이전 페이지로 이동
+      if (comments.length === 1 && pagination.currentPage > 1) {
+        fetchComments(pagination.currentPage - 1, pagination.pageSize);
+      } else if (comments.length === 1 && pagination.currentPage === 1) {
+        // 마지막 댓글이 삭제되었다면 빈 배열 설정
+        setComments([]);
+      }
+      
+      toast.success('댓글이 삭제되었습니다.');
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '댓글 삭제 중 오류가 발생했습니다.';
       toast.error(errorMessage);
@@ -104,31 +140,36 @@ export default function CommentsManagePage() {
   // 검색 필터링 함수
   const filteredComments = searchQuery.trim() === ''
     ? comments
-    : comments.filter(comment => 
-        comment.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comment.story.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    : comments.filter(comment =>
+      comment.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      comment.story.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Sidebar/>
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    <div className="min-h-screen">
+      <Sidebar />
+      {isLoading && (<Loading />)}
+      {/* Mobile Header */}
+      <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
-      <div className="md:pl-64 p-6">
-        <div className="max-w-5xl mx-auto">
-          {/* 헤더 */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Link
-                href="/myhome"
-                className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>마이홈으로 돌아가기</span>
-              </Link>
+      {/* Hamburger Menu */}
+      <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
+
+      <div className="flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+        <div className="w-full max-w-6xl pt-20 md:pt-8">
+          {/* Header */}
+          <div className="flex flex-col gap-1 mb-8">
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                댓글
+              </span>
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                관리
+              </span>
             </div>
-            <h1 className="text-2xl font-bold mb-2">내 댓글 관리</h1>
-            <p className="text-gray-400">내가 작성한 댓글을 한 눈에 확인하고 관리할 수 있습니다.</p>
+            <div className="flex flex-col sm:flex-row">
+              <p className="text-gray-400 text-sm">내가 작성한 댓글을 한 눈에 확인하고 관리할 수 있습니다.</p>
+            </div>
           </div>
 
           {/* 검색 바 */}
@@ -143,23 +184,12 @@ export default function CommentsManagePage() {
             />
           </div>
 
-          {/* 로딩 중 */}
-          {isLoading && (
-            <div className="flex justify-center py-12">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce"></div>
-              </div>
-            </div>
-          )}
-
           {/* 에러 */}
           {!isLoading && error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
               <p className="text-red-400">{error}</p>
               <button
-                onClick={fetchComments}
+                onClick={() => fetchComments(pagination.currentPage, pagination.pageSize)}
                 className="mt-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
               >
                 다시 시도
@@ -194,29 +224,20 @@ export default function CommentsManagePage() {
           {/* 댓글 목록 */}
           {!isLoading && !error && filteredComments.length > 0 && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-400">총 {filteredComments.length}개의 댓글</p>
-              
               {filteredComments.map(comment => (
                 <div
                   key={comment.id}
                   className="bg-gray-800/70 rounded-lg overflow-hidden border border-gray-700"
                 >
-                  <div className="flex items-center justify-between px-4 py-3 bg-gray-800/90 border-b border-gray-700">
-                    <Link
-                      href={`/stories/${comment.story.id}`}
-                      className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors"
-                    >
-                      <span className="font-medium line-clamp-1">{comment.story.title}</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
+                  <div className="flex px-4 py-3 bg-gray-800/90 border-b border-gray-700">
                     <div className="text-xs text-gray-400">{formatDate(comment.createdAt)}</div>
                   </div>
-                  
+
                   <div className="p-4 flex">
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-200 whitespace-pre-line">{comment.content}</p>
                     </div>
-                    
+
                     <div className="ml-3 flex-shrink-0">
                       <button
                         onClick={() => setShowDeleteModal(comment.id)}
@@ -228,6 +249,69 @@ export default function CommentsManagePage() {
                   </div>
                 </div>
               ))}
+
+              {/* 페이지네이션 (검색 중이 아닐 때만 표시) */}
+              {searchQuery.trim() === '' && pagination.totalPages > 1 && (
+                <div className="flex justify-center items-center mt-6 space-x-2">
+                  <button
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                    disabled={pagination.currentPage === 1}
+                    className={`p-2 rounded-lg ${
+                      pagination.currentPage === 1
+                        ? 'text-gray-500 cursor-not-allowed'
+                        : 'text-gray-200 hover:bg-gray-700'
+                    }`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      
+                      if (pagination.totalPages <= 5) {
+                        // 5페이지 이하면 모든 페이지 표시
+                        pageNum = i + 1;
+                      } else if (pagination.currentPage <= 3) {
+                        // 현재 페이지가 3 이하면 1~5 표시
+                        pageNum = i + 1;
+                      } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                        // 현재 페이지가 마지막에서 2페이지 이내면 마지막 5페이지 표시
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        // 그 외의 경우 현재 페이지 중심으로 2개씩 앞뒤로 표시
+                        pageNum = pagination.currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg ${
+                            pagination.currentPage === pageNum
+                              ? 'bg-indigo-600 text-white'
+                              : 'text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    className={`p-2 rounded-lg ${
+                      pagination.currentPage === pagination.totalPages
+                        ? 'text-gray-500 cursor-not-allowed'
+                        : 'text-gray-200 hover:bg-gray-700'
+                    }`}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -241,11 +325,11 @@ export default function CommentsManagePage() {
               <AlertTriangle className="w-6 h-6" />
               <h3 className="text-xl font-bold">댓글 삭제</h3>
             </div>
-            
+
             <p className="mb-6 text-gray-300">
               정말로 이 댓글을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.
             </p>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(null)}

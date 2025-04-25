@@ -318,8 +318,8 @@ export default function DiscussionsPage() {
       <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
         <div className="w-full max-w-6xl pt-20 md:pt-8">
           {/* Header */}
-          <div className="flex flex-col gap-4 mb-8">
-            <div className="flex items-baseline gap-1">
+          <div className="flex flex-col gap-1 mb-8">
+            <div className="flex items-baseline">
               <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                 독서
               </span>
@@ -327,8 +327,8 @@ export default function DiscussionsPage() {
                 토론
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <p className="text-gray-400">다양한 책에 대한 토론에 참여하고 의견을 나눠보세요.</p>
+            <div className="flex flex-col sm:flex-row">
+              <p className="text-gray-400 text-sm">다양한 책에 대한 토론에 참여하고 의견을 나눠보세요.</p>
             </div>
           </div>
 

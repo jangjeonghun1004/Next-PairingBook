@@ -854,7 +854,7 @@ export default function MyHomePage() {
                                         onClick={() => reportStory(story.id)}
                                       >
                                         신고하기
-                                      </button>
+                              </button>
                                     )}
                                   </div>
                                 )}
@@ -1031,7 +1031,7 @@ export default function MyHomePage() {
                                               onClick={() => loadMoreComments(story.id)}
                                             >
                                               댓글 더 보기
-                                            </button>
+                                </button>
                                           )}
                                         </div>
                                       )}

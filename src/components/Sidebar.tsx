@@ -5,14 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
-
-
+import Image from "next/image";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
 
   const isActive = (path: string) => {
@@ -56,11 +55,11 @@ export default function Sidebar() {
           href="/myhome"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/myhome')
             ? 'bg-indigo-500/20 text-indigo-400'
-            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            : 'hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <Home className="w-6 h-6 flex-shrink-0" />
-          <span className="text-sm">홈</span>
+          <span className="text-base font-medium">홈</span>
         </Link>
 
         {/* <button
@@ -75,22 +74,22 @@ export default function Sidebar() {
           href="/stories"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/stories')
             ? 'bg-indigo-500/20 text-indigo-400'
-            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            : 'hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <BookOpen className="w-6 h-6 flex-shrink-0" />
-          <span className="text-sm">이야기</span>
+          <span className="text-base font-medium">이야기</span>
         </Link>
 
         <Link
           href="/discussions"
           className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/discussions')
             ? 'bg-indigo-500/20 text-indigo-400'
-            : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
+            : 'hover:bg-gray-800/50 hover:text-gray-300'
             }`}
         >
           <MessageSquare className="w-6 h-6 flex-shrink-0" />
-          <span className="text-sm">독서 토론</span>
+          <span className="text-base font-medium">독서 토론</span>
         </Link>
 
         {/* <Link
@@ -112,12 +111,23 @@ export default function Sidebar() {
             href="/profile"
             className="w-full flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
-              <User className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-full overflow-hidden relative">
+              {session?.user?.image ? (
+                <Image 
+                  src={session.user.image} 
+                  alt="프로필 이미지"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
+                  <User className="w-5 h-5" />
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-start">
               <span className="text-base font-medium">내 프로필</span>
-              <span className="text-sm text-gray-400">프로필 관리</span>
+              <span className="text-sm text-gray-400">페어링 BOOK 관리</span>
             </div>
           </Link>
         )}
@@ -125,13 +135,13 @@ export default function Sidebar() {
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className={`px-3 py-3 rounded-lg flex items-center gap-4 w-full text-left transition-all ${showMoreMenu
+            className={`px-6 py-3 rounded-lg hover:text-white flex items-center gap-4 w-full text-left transition-all ${showMoreMenu
               ? 'bg-gray-800/50 text-gray-300'
               : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-300'
               }`}
           >
             <Wrench className="w-6 h-6 flex-shrink-0" />
-            <span className="text-sm">관리 도구</span>
+            <span className="text-base font-medium">관리 도구</span>
           </button>
 
           {/* 더 보기 메뉴 */}

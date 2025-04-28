@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '../../../../auth';
 import { prisma } from '@/lib/prisma';
 
 // 댓글 삭제 API
@@ -12,7 +11,7 @@ export async function DELETE(
     const { id: commentId } = await params;
     
     // 인증 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

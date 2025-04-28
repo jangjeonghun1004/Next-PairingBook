@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 // 참여자 상태 업데이트 API
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
     // 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -18,7 +17,7 @@ export async function PATCH(
       );
     }
 
-    const { id: participantId } = await params;
+    const { id: participantId } = await context.params;
     const { action } = await request.json();
 
     // 요청 검증

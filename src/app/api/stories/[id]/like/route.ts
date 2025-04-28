@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
     // 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
-        { error: '인증되지 않은 사용자입니다.' },
+        { error: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }
     
     // params 유효성 검사
-    const { id: storyId } = await params;
+    const { id: storyId } = await context.params;
     if (!storyId) {
       return NextResponse.json(
         { error: '유효하지 않은 이야기 ID입니다.' },

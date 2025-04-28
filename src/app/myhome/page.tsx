@@ -142,12 +142,15 @@ export default function MyHomePage() {
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // 로그인 상태가 아니면 홈페이지로 리다이렉트
-    if (status === 'unauthenticated') {
-      router.push('/');
-      return;
-    }
-
+    // 미인증 사용자는 로그인 페이지로 리다이렉트
+    // if (status === 'unauthenticated') {
+    //   console.log('클라이언트 측 인증 체크: 미인증 상태 감지');
+    //   // callbackUrl 파라미터를 추가하여 로그인 후 다시 이 페이지로 돌아올 수 있도록 함
+    //   const callbackUrl = encodeURIComponent(window.location.pathname);
+    //   router.replace(`/?callbackUrl=${callbackUrl}`);
+    //   return;
+    // }
+    
     // 로그인 상태일 때만 데이터 로드
     if (status === 'authenticated') {
       fetchHomeData();

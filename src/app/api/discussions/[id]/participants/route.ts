@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 interface DiscussionWithMaxParticipants {
@@ -10,10 +9,11 @@ interface DiscussionWithMaxParticipants {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: {params : Promise<{ id: string }>}
+): Promise<NextResponse> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
+    
     if (!session?.user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -21,7 +21,7 @@ export async function POST(
       );
     }
 
-    const { id: discussionId } = await params;
+    const { id: discussionId } = await context.params;
     
     // Discussion 모델 수정 방법
     // 직접 타입 단언 사용
@@ -102,7 +102,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },

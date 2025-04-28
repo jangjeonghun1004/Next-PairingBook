@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '../../../../auth';
 import { prisma } from '@/lib/prisma';
 
 // 내가 작성한 댓글 목록 가져오기
 export async function GET(request: Request) {
   try {
     // 인증 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '../../../../auth';
 import { prisma } from '@/lib/prisma';
 
 // 사용자 팔로우/언팔로우 토글 API
 export async function POST(request: NextRequest) {
   try {
-    // 인증된 세션 확인
-    const session = await getServerSession(authOptions);
+    // 세션 확인
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
-        { error: '인증되지 않은 사용자입니다.' },
+        { error: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // 인증된 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

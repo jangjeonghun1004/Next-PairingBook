@@ -1,10 +1,11 @@
 'use client';
 
-import { BookOpen, Home, MessageSquare, User, Edit, LogOut, LogIn, Wrench } from "lucide-react";
+import { BookOpen, Home, MessageSquare, User, Edit, LogOut, LogIn, Wrench, Mail as MailIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import useUnreadNotes from "@/hooks/useUnreadNotes";
 
 interface HamburgerMenuProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const unreadNotesCount = useUnreadNotes();
 
   // 외부 클릭 감지를 위한 이벤트 리스너
   useEffect(() => {
@@ -125,6 +127,24 @@ export default function HamburgerMenu({ isOpen, onOpenChange }: HamburgerMenuPro
             >
               <MessageSquare className="w-6 h-6" />
               <span className="text-base font-medium">독서 토론</span>
+            </Link>
+
+            <Link
+              href="/notes"
+              className="flex items-center gap-4 p-4 rounded-xl text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
+              onClick={() => onOpenChange(false)}
+            >
+              <div className="relative">
+                <MailIcon className="w-6 h-6" />
+                {unreadNotesCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs text-white font-bold">
+                      {unreadNotesCount > 9 ? '9+' : unreadNotesCount}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <span className="text-base font-medium">쪽지함</span>
             </Link>
           </nav>
 

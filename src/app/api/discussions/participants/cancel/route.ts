@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '../../../../../auth';
 import { prisma } from '@/lib/prisma';
 
 // 토론 참여 취소 API
 export async function POST(req: NextRequest) {
   try {
     // 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },

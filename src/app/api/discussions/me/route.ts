@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '../../../../auth';
 import { prisma } from '@/lib/prisma';
 import { Discussion, DiscussionParticipant, User } from '@prisma/client';
 
@@ -18,11 +17,11 @@ type ParticipationStatus = {
 // 내 토론 정보 가져오기 API
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }

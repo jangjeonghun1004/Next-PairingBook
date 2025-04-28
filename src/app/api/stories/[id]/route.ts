@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 
 // 이야기 조회 API
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await getServerSession(authOptions);
+    await auth();
     // 파라미터가 올바르게 전달되었는지 확인
     const { id: storyId } = await params;
     if (!storyId) {
@@ -102,7 +101,7 @@ export async function DELETE(
 ) {
   try {
     // 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
@@ -177,7 +176,7 @@ export async function PUT(
 ) {
   try {
     // 세션 확인
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

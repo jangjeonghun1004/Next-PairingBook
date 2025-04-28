@@ -1,11 +1,23 @@
 'use client';
 
-import { Home, BookOpen, User, MessageSquare, LogOut, LogIn, Edit, Wrench } from "lucide-react";
+import { Home, BookOpen, User, MessageSquare, LogOut, LogIn, Edit, Wrench, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import useUnreadNotes from "@/hooks/useUnreadNotes";
+
+// 대화 상대 타입 정의
+// interface Conversation {
+//   userId: string;
+//   userName: string;
+//   userImage: string | null;
+//   lastMessage: string;
+//   lastMessageTime: string;
+//   unreadCount: number;
+// }
+
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -13,6 +25,7 @@ export default function Sidebar() {
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const unreadNotesCount = useUnreadNotes();
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -90,6 +103,27 @@ export default function Sidebar() {
         >
           <MessageSquare className="w-6 h-6 flex-shrink-0" />
           <span className="text-base font-medium">독서 토론</span>
+        </Link>
+
+        {/* 쪽지 메뉴 추가 */}
+        <Link
+          href="/notes"
+          className={`px-3 py-3 rounded-lg flex items-center gap-4 transition-all ${isActive('/notes')
+            ? 'bg-indigo-500/20 text-indigo-400'
+            : 'hover:bg-gray-800/50 hover:text-gray-300'
+            }`}
+        >
+          <div className="relative flex-shrink-0">
+            <MailIcon className="w-6 h-6" />
+            {unreadNotesCount > 0 && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                <span className="text-xs text-white font-bold">
+                  {unreadNotesCount > 9 ? '9+' : unreadNotesCount}
+                </span>
+              </div>
+            )}
+          </div>
+          <span className="text-base font-medium">쪽지함</span>
         </Link>
 
         {/* <Link

@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
+import { auth } from '../../../auth';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { Session } from 'next-auth';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions) as Session;
+    const session = await auth();
+    
     if (!session?.user) {
       return NextResponse.json(
-        { error: '인증되지 않은 사용자입니다.' },
+        { error: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }

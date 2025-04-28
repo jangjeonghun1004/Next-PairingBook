@@ -51,6 +51,18 @@ export default function ProfilePage() {
     });
     const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
 
+    // 인증 체크 추가
+    // useEffect(() => {
+    //     // 미인증 사용자는 로그인 페이지로 리다이렉트
+    //     if (status === 'unauthenticated') {
+    //         console.log('클라이언트 측 인증 체크: 프로필 페이지 접근 - 미인증 상태');
+    //         // callbackUrl 파라미터를 추가하여 로그인 후 다시 이 페이지로 돌아올 수 있도록 함
+    //         const callbackUrl = encodeURIComponent(window.location.pathname);
+    //         router.replace(`/?callbackUrl=${callbackUrl}`);
+    //         return;
+    //     }
+    // }, [status, router]);
+
     // 사용자 프로필 불러오기
     const fetchUserProfile = useCallback(async () => {
         try {
@@ -499,7 +511,7 @@ export default function ProfilePage() {
                     {isLoading && <Loading />}
 
                     {/* Header */}
-                    <div className="flex flex-col gap-4 mb-8">
+                    <div className="flex flex-col gap-1 mb-8">
                         <div className="flex items-baseline gap-1">
                             <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                                 프로필
@@ -509,7 +521,7 @@ export default function ProfilePage() {
                             </span>
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <p className="text-gray-400">나만의 페어링 BOOK을 통해 자신을 표현해보세요.</p>
+                            <p className="text-gray-400 text-sm">나만의 페어링 BOOK을 통해 자신을 표현해보세요.</p>
                         </div>
                     </div>
 

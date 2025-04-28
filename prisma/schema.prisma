@@ -26,6 +26,12 @@ model User {
   followers      UserFollow[]            @relation("follower")
   following      UserFollow[]            @relation("following")
   userLikes      UserLike[]
+  sentMessages   Message[]               @relation("sender")
+  receivedMessages Message[]             @relation("receiver")
+  conversationsAsInitiator Conversation[] @relation("initiator")
+  conversationsAsParticipant Conversation[] @relation("participant")
+  sentNotes      Note[]                  @relation("noteSender")
+  receivedNotes  Note[]                  @relation("noteReceiver")
 }
 
 model Account {
@@ -159,4 +165,65 @@ model UserFollow {
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model Message {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  senderId    String   @map("sender_id")
+  receiverId  String   @map("receiver_id")
+  isRead      Boolean  @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+  conversationId String @map("conversation_id") @db.Uuid
+  sender      User     @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([isRead])
+}
+
+model Conversation {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  initiatorId   String   @map("initiator_id")
+  participantId String   @map("participant_id")
+  initiatorUnreadCount Int @default(0) @map("initiator_unread_count")
+  participantUnreadCount Int @default(0) @map("participant_unread_count")
+  initiatorDeleted Boolean @default(false) @map("initiator_deleted")
+  participantDeleted Boolean @default(false) @map("participant_deleted")
+  initiator     User     @relation("initiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  participant   User     @relation("participant", fields: [participantId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  @@index([initiatorId])
+  @@index([participantId])
+  @@index([lastActivityAt])
+}
+
+model Note {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  content         String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  senderId        String    @map("sender_id")
+  receiverId      String    @map("receiver_id")
+  isRead          Boolean   @default(false) @map("is_read")
+  readAt          DateTime? @map("read_at")
+  senderDeleted   Boolean   @default(false) @map("sender_deleted")
+  receiverDeleted Boolean   @default(false) @map("receiver_deleted")
+  sender          User      @relation("noteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User      @relation("noteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+  @@index([isRead])
 }

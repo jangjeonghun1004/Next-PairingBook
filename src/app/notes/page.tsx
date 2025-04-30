@@ -11,7 +11,7 @@ import HamburgerMenu from '@/components/HamburgerMenu';
 import NoteList, { Note } from '@/components/notes/NoteList';
 import NoteDetail from '@/components/notes/NoteDetail';
 import { UserSearchResult } from '@/components/notes/UserSearchModal';
-import { Inbox, SendHorizontal, RefreshCw, Plus, Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { Inbox, SendHorizontal} from 'lucide-react';
 import ComposeNoteModal from '@/components/notes/ComposeNoteModal';
 
 // 선택된 쪽지 상태 관리를 위한 reducer 타입 정의
@@ -73,8 +73,6 @@ export default function NotesPage() {
   
   // 기본 상태 관리
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   
   // 탭별 데이터와 로딩 상태 분리
   const [receivedNotes, setReceivedNotes] = useState<Note[]>([]);
@@ -469,9 +467,9 @@ export default function NotesPage() {
   const hasSelectedNote = !!noteSelection.noteDetails;
   
   // 컴포넌트 마운트 감지
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // useEffect(() => {
+  //   setIsClient(true);
+  // }, []);
 
   // 로딩 상태 표시를 전체 페이지 대신 섹션별로 처리
   if (status === 'loading') {

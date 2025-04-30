@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, memo } from 'react';
-import { Mail, Trash, RefreshCw, CheckCircle } from 'lucide-react';
+import { RefreshCw, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 

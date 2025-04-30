@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Filter, Search, Calendar, Users, Globe, Lock, BookOpen, SlidersHorizontal } from "lucide-react";
+import { Filter, Search, Calendar, Users, Globe, Lock, BookOpen, SlidersHorizontal, PenTool, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 
 // Components
@@ -485,10 +485,14 @@ export default function DiscussionsPage() {
           ) : (
             <div className="flex flex-col gap-6">
               {sortedDiscussions.map((discussion) => (
-                <DiscussionItem
-                  key={discussion.id}
-                  discussion={discussion}
-                />
+                <div 
+                  key={discussion.id} 
+                  className="bg-gray-800/30 rounded-xl p-4 md:p-5 border border-gray-700/30 backdrop-blur-sm hover:shadow-lg transition-all hover:bg-gray-800/50"
+                >
+                  <DiscussionItem
+                    discussion={discussion}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -538,67 +542,225 @@ function DiscussionItem({
 }) {
   const [imageError, setImageError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const router = useRouter();
+
+  // 토론 클릭 핸들러
+  const handleDiscussionClick = () => {
+    router.push(`/discussions/${discussion.id}`);
+  };
 
   return (
-    <div className="relative flex flex-col md:flex-row gap-4 overflow-hidden">
-      {/* Main Card Area */}
-      <div className="flex-grow md:flex-1 flex order-2 md:order-2">
-        <DiscussionCard
-          id={discussion.id}
-          title={discussion.title}
-          author={discussion.author.name || '익명'}
-          authorImage={discussion.author.image || ''}
-          bookTitle={discussion.bookTitle}
-          bookAuthor={discussion.bookAuthor}
-          createdAt={discussion.createdAt}
-          likes={discussion.likes}
-          comments={discussion.comments}
-          tags={discussion.tags}
-          privacy={discussion.privacy !== 'all' ? discussion.privacy : undefined}
-          scheduledAt={discussion.scheduledAt}
-          currentParticipants={discussion.currentParticipants}
-          maxParticipants={discussion.maxParticipants}
-        />
-      </div>
+    <div 
+      className="relative flex flex-col overflow-hidden transition-all cursor-pointer hover:scale-[1.01]" 
+      onClick={handleDiscussionClick}
+    >
+      {/* 모바일 레이아웃 */}
+      <div className="flex md:hidden w-full mb-3">
+        {/* 책 이미지 */}
+        <div className="w-[100px] h-[160px] flex-shrink-0 relative overflow-hidden rounded-lg border border-gray-700/30">
+          {discussion.imageUrls.length > 0 && !imageError ? (
+            <>
+              {isImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80">
+                  <div className="animate-pulse">
+                    <Loading />
+                  </div>
+                </div>
+              )}
+              <Image
+                src={discussion.imageUrls[0]} 
+                alt={discussion.title}
+                width={100}
+                height={140}
+                className="w-full h-full object-cover"
+                onLoad={() => setIsImageLoading(false)}
+                onError={() => setImageError(true)}
+              />
+              {discussion.imageUrls.length > 1 && (
+                <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
+                  +{discussion.imageUrls.length - 1}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+              {imageError ? (
+                <div className="flex flex-col items-center">
+                  <Logo size="sm" />
+                  <span className="text-[10px] text-gray-400 mt-1">이미지 오류</span>
+                </div>
+              ) : (
+                <BookOpen className="w-10 h-10 text-indigo-400/50" />
+              )}
+            </div>
+          )}
+        </div>
 
-      {/* Left Metadata Area */}
-      <div className="w-full md:w-48 md:flex-shrink-0 flex flex-row md:flex-col justify-between md:justify-between gap-2 self-stretch order-1 md:order-1 pb-2 md:pb-0">
-        {discussion.imageUrls.length > 0 && !imageError ? (
-          <div className="w-full h-full relative overflow-hidden rounded-lg mb-2">
-            {isImageLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80">
-                <div className="animate-pulse">
-                  <Loading />
+        {/* 토론 정보 (제목, 작성자 등) */}
+        <div className="flex-1 ml-3 flex flex-col">
+          <div className="flex items-center mb-1">
+            {/* 작성자 아바타 */}
+            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
+              {discussion.author.image ? (
+                <img
+                  src={discussion.author.image}
+                  alt={discussion.author.name || '사용자'}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <span className="text-xs font-medium text-white">
+                  {discussion.author.name?.[0] || '?'}
+                </span>
+              )}
+            </div>
+            
+            {/* 작성자 이름 */}
+            <span className="ml-2 text-sm text-gray-300 line-clamp-1 truncate">
+              {discussion.author.name || '익명'}
+            </span>
+          </div>
+          
+          {/* 토론 제목 */}
+          <h3 className="text-base font-medium text-white line-clamp-2 mb-1 min-h-[50px]">
+            {discussion.title}
+          </h3>
+          
+          {/* 책 정보 */}
+          <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/50 text-white">
+              <BookOpen className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[100px]">{discussion.bookTitle}</span>
+            </div>
+            <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/50 text-white">
+              <PenTool className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[80px]">{discussion.bookAuthor}</span>
+            </div>
+          </div>
+          
+          {/* 토론 예정 및 참여 현황 - 모바일에서만 표시 */}
+          <div className="flex flex-col space-y-2">
+            {/* 토론 예정 날짜 */}
+            {discussion.scheduledAt && (
+              <div className="flex items-center">
+                <Calendar className="w-3.5 h-3.5 text-indigo-400 mr-1.5" />
+                <span className="text-xs text-indigo-300">
+                  {new Date(discussion.scheduledAt).toLocaleDateString('ko-KR', {
+                    month: 'short',
+                    day: 'numeric'
+                  })} {new Date(discussion.scheduledAt).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </span>
+              </div>
+            )}
+
+            {/* 참가자 정보 */}
+            {discussion.currentParticipants !== undefined && discussion.maxParticipants !== undefined && (
+              <div className="flex flex-col">
+                <div className="flex items-center mb-1">
+                  <Users className="w-3.5 h-3.5 text-gray-400 mr-1.5" />
+                  <span className="text-xs text-gray-300">
+                    {discussion.currentParticipants}/{discussion.maxParticipants} 참여중
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-600 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{
+                      width: `${(discussion.currentParticipants / discussion.maxParticipants) * 100}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             )}
-            <Image
-              src={discussion.imageUrls[0]} 
-              alt={discussion.title}
-              width={144}
-              height={144}
-              className="w-full h-full object-cover"
-              onLoad={() => setIsImageLoading(false)}
-              onError={() => setImageError(true)}
-            />
-            {discussion.imageUrls.length > 1 && (
-              <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
-                +{discussion.imageUrls.length - 1}
-              </div>
-            )}
           </div>
-        ) : (
-          <div className="w-full h-full relative rounded-lg mb-2 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
-            {imageError ? (
-              <div className="flex flex-col items-center">
-                <Logo size="md" />
-                <span className="text-xs text-gray-400 mt-1">이미지 오류</span>
-              </div>
+        </div>
+      </div>
+
+      {/* 데스크톱 레이아웃 */}
+      <div className="hidden md:flex md:flex-row gap-4">
+        {/* 책 이미지 - 데스크톱 */}
+        <div className="w-48 flex-shrink-0">
+          <div className="w-full h-70 relative overflow-hidden rounded-lg border border-gray-700/30">
+            {discussion.imageUrls.length > 0 && !imageError ? (
+              <>
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80">
+                    <div className="animate-pulse">
+                      <Loading />
+                    </div>
+                  </div>
+                )}
+                <Image
+                  src={discussion.imageUrls[0]} 
+                  alt={discussion.title}
+                  width={200}
+                  height={240}
+                  className="w-full h-full object-cover"
+                  onLoad={() => setIsImageLoading(false)}
+                  onError={() => setImageError(true)}
+                />
+                {discussion.imageUrls.length > 1 && (
+                  <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
+                    +{discussion.imageUrls.length - 1}
+                  </div>
+                )}
+              </>
             ) : (
-              <BookOpen className="w-8 h-8 text-indigo-400/50" />
+              <div className="w-full h-full rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+                {imageError ? (
+                  <div className="flex flex-col items-center">
+                    <Logo size="sm" />
+                    <span className="text-[10px] text-gray-400 mt-1">이미지 오류</span>
+                  </div>
+                ) : (
+                  <BookOpen className="w-12 h-12 text-indigo-400/50" />
+                )}
+              </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* 토론 카드 - 데스크톱 */}
+        <div className="flex-1">
+          <DiscussionCard
+            id={discussion.id}
+            title={discussion.title}
+            author={discussion.author.name || '익명'}
+            authorImage={discussion.author.image || ''}
+            bookTitle={discussion.bookTitle}
+            bookAuthor={discussion.bookAuthor}
+            createdAt={discussion.createdAt}
+            likes={discussion.likes}
+            comments={discussion.comments}
+            tags={discussion.tags}
+            privacy={discussion.privacy !== 'all' ? discussion.privacy : undefined}
+            scheduledAt={discussion.scheduledAt}
+            currentParticipants={discussion.currentParticipants}
+            maxParticipants={discussion.maxParticipants}
+          />
+        </div>
+      </div>
+
+      {/* 하단 정보 (좋아요, 댓글, 시간) - 모바일에서만 표시 */}
+      <div className="flex md:hidden items-center gap-3 mt-2 text-gray-400">
+        <div className="flex items-center gap-1">
+          <Heart className="w-3.5 h-3.5" />
+          <span className="text-xs">{discussion.likes}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span className="text-xs">{discussion.comments}</span>
+        </div>
+        <div className="text-[10px] text-gray-400 ml-auto">
+          {new Date(discussion.createdAt).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })}
+        </div>
       </div>
     </div>
   );

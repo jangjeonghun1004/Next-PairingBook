@@ -79,9 +79,9 @@ export async function GET(request: Request) {
     // 실제 구현 시 데이터베이스에서 사용자 검색
     const users = await prisma.user.findMany({
       where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { email: { contains: query, mode: 'insensitive' } },
         ],
         NOT: { id: session.user.id }, // 자기 자신 제외
       },

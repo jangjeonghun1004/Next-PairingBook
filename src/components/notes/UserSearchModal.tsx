@@ -98,7 +98,7 @@ export default function UserSearchModal({
     setLoading(true);
     setError(null);
     
-    try {
+      try {
       // 디버깅 정보 추가
       const debugInfo = '&debug=true&client=search_modal_' + Date.now();
       
@@ -212,25 +212,25 @@ export default function UserSearchModal({
         }}
         onInteractOutside={(e) => {
           // 외부 클릭 기본 동작 방지 (모달 닫힘 방지)
-          e.preventDefault();
-        }}
-      >
+            e.preventDefault();
+          }}
+        >
         <DialogHeader>
           <DialogTitle>받는 사람 선택</DialogTitle>
         </DialogHeader>
-
+          
         <div className="space-y-4">
-          <div className="relative">
+            <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="이름 또는 이메일로 검색"
               className="pl-10"
-            />
+              />
           </div>
-
+          
           <div className="max-h-[300px] overflow-y-auto">
             {loading ? (
               <div className="flex justify-center py-4">
@@ -259,7 +259,7 @@ export default function UserSearchModal({
                 {users
                   .filter((user) => !selectedUserIds.has(user.id))
                   .map((user) => (
-                    <li
+                    <li 
                       key={user.id}
                       className="flex items-center justify-between p-2 hover:bg-gray-700 rounded-md cursor-pointer transition-colors"
                       onClick={() => handleUserSelect(user)}
@@ -267,8 +267,8 @@ export default function UserSearchModal({
                       <div className="flex items-center gap-2">
                         {user.image ? (
                           <>
-                            <Image
-                              src={user.image}
+                          <Image 
+                            src={user.image} 
                               alt={user.name}
                               width={32}
                               height={32}
@@ -292,7 +292,7 @@ export default function UserSearchModal({
                         <div>
                           <p className="font-medium">{user.name}</p>
                           <p className="text-sm text-gray-400">{user.email}</p>
-                        </div>
+                      </div>
                       </div>
                       <Button 
                         variant="ghost" 

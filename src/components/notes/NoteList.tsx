@@ -51,8 +51,8 @@ const NoteItem = memo(({
 }) => {
   return (
     <div
-      className={`flex items-center p-4 cursor-pointer hover:bg-gray-700/50 transition-all duration-200 ${
-        isSelected ? 'bg-indigo-500/20 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'
+      className={`flex items-center p-4 cursor-pointer hover:bg-gray-700/50 transition-all duration-200 border-b border-gray-700/50 ${
+        isSelected ? 'bg-indigo-500/20 border-l-4 border-l-indigo-500 border-b border-gray-700/50' : 'border-l-4 border-l-transparent'
       } ${isUnread && isReceived ? 'bg-gray-700/30' : ''}`}
       onClick={(e: React.MouseEvent<HTMLDivElement>) => {
         // 체크박스 영역 클릭 시 목록 선택 대신 체크박스 토글
@@ -208,76 +208,55 @@ const NoteList = ({
     }
   }, []);
 
-  // 쪽지가 없는 경우 표시할 컴포넌트
-  if (notes.length === 0) {
-    return (
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between p-3 border-b border-gray-700">
-          <span className="text-gray-400">쪽지 없음</span>
-          <button
-            onClick={onRefresh}
-            className="p-1.5 rounded-md hover:bg-gray-700"
-            title="새로고침"
-            aria-label="쪽지 목록 새로고침"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 flex flex-col items-center justify-center text-gray-400">
-          <Mail className="w-12 h-12 mb-3 opacity-40" />
-          <p>쪽지가 없습니다.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden">
-      {/* 도구 모음 */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-700">
-        <div className="flex items-center gap-2">
+    <div>
+      {/* 쪽지 목록 헤더 */}
+      <div className="sticky top-0 z-10 bg-gray-800 border-b border-gray-700 flex items-center justify-between p-3">
+        <div className="flex items-center">
           <button
             onClick={toggleSelectMode}
-            className={`p-1.5 rounded-md ${
-              selectMode ? 'bg-indigo-500/20 text-indigo-400' : 'hover:bg-gray-700'
+            className={`p-1.5 rounded-md text-sm flex items-center cursor-pointer ${
+              selectMode
+                ? 'bg-indigo-500/20 text-indigo-400'
+                : 'text-gray-400 hover:text-gray-300'
             }`}
-            title={selectMode ? '선택 모드 종료' : '선택 모드 시작'}
             aria-label={selectMode ? '선택 모드 종료' : '선택 모드 시작'}
           >
-            <CheckCircle className="w-5 h-5" />
+            {selectMode ? '취소' : (<><CheckCircle className="w-5 h-5" /><span className='pl-2'>삭제</span></>)}
           </button>
           
           {selectMode && (
             <>
               <button
                 onClick={toggleSelectAll}
-                className="p-1.5 rounded-md hover:bg-gray-700"
-                title="모두 선택/해제"
-                aria-label={selectedNotes.size === notes.length ? '모두 해제' : '모두 선택'}
+                className="ml-2 p-1.5 rounded-md text-sm text-gray-400 hover:text-gray-300 cursor-pointer"
+                aria-label="모두 선택 또는 해제"
               >
-                <span className="text-sm font-medium">
-                  {selectedNotes.size === notes.length ? '모두 해제' : '모두 선택'}
-                </span>
+                {selectedNotes.size === notes.length ? '모두 해제' : '모두 선택'}
               </button>
               
               <button
                 onClick={deleteSelectedNotes}
-                className={`p-1.5 rounded-md hover:bg-gray-700 ${
-                  selectedNotes.size === 0 ? 'text-gray-500 cursor-not-allowed' : 'text-red-400'
-                }`}
-                title="선택 항목 삭제"
-                aria-label="선택한 쪽지 삭제"
                 disabled={selectedNotes.size === 0}
+                className={`ml-2 p-1.5 rounded-md text-sm ${
+                  selectedNotes.size > 0
+                    ? 'text-red-400 hover:text-red-300'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+                aria-label="선택한 쪽지 삭제"
               >
-                <Trash className="w-5 h-5" />
+                삭제
               </button>
             </>
           )}
         </div>
         
+        {/* <div className="text-sm text-gray-400">
+          {isReceived ? '받은 쪽지' : '보낸 쪽지'}
+        </div> */}
         <button
           onClick={onRefresh}
-          className="p-1.5 rounded-md hover:bg-gray-700"
+          className="p-1.5 rounded-md hover:bg-gray-700 cursor-pointer"
           title="새로고침"
           aria-label="쪽지 목록 새로고침"
         >
@@ -286,22 +265,30 @@ const NoteList = ({
       </div>
       
       {/* 쪽지 목록 */}
-      <div className="divide-y divide-gray-700 max-h-[calc(100vh-240px)] md:max-h-none overflow-y-auto">
-        {notes.map((note) => (
-          <NoteItem
-            key={note.id}
-            note={note}
-            isSelected={selectedNoteId === note.id}
-            isUnread={!note.isRead}
-            isReceived={isReceived}
-            selectMode={selectMode}
-            isSelectedForAction={selectedNotes.has(note.id)}
-            onSelect={onNoteSelect}
-            onToggleSelect={toggleNoteSelection}
-            formatTime={formatTime}
-          />
-        ))}
-      </div>
+      {notes.length === 0 ? (
+        <div className="p-6 text-center text-gray-400">
+          {isReceived
+            ? '받은 쪽지가 없습니다.'
+            : '보낸 쪽지가 없습니다.'}
+        </div>
+      ) : (
+        <div>
+          {notes.map((note) => (
+            <NoteItem
+              key={note.id}
+              note={note}
+              isSelected={note.id === selectedNoteId}
+              isUnread={!note.isRead}
+              isReceived={isReceived}
+              selectMode={selectMode}
+              isSelectedForAction={selectedNotes.has(note.id)}
+              onSelect={onNoteSelect}
+              onToggleSelect={toggleNoteSelection}
+              formatTime={formatTime}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

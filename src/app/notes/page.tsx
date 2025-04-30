@@ -11,7 +11,7 @@ import HamburgerMenu from '@/components/HamburgerMenu';
 import NoteList, { Note } from '@/components/notes/NoteList';
 import NoteDetail from '@/components/notes/NoteDetail';
 import { UserSearchResult } from '@/components/notes/UserSearchModal';
-import { Inbox, SendHorizontal, RefreshCw, Plus } from 'lucide-react';
+import { Inbox, SendHorizontal, RefreshCw, Plus, Search, Filter, SlidersHorizontal } from 'lucide-react';
 import ComposeNoteModal from '@/components/notes/ComposeNoteModal';
 
 // 선택된 쪽지 상태 관리를 위한 reducer 타입 정의
@@ -73,6 +73,8 @@ export default function NotesPage() {
   
   // 기본 상태 관리
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // 탭별 데이터와 로딩 상태 분리
   const [receivedNotes, setReceivedNotes] = useState<Note[]>([]);
@@ -129,6 +131,7 @@ export default function NotesPage() {
     }
     
     try {
+      console.log(`쪽지 목록 요청: ${tabType}, 페이지: ${usePage}`);
       const response = await fetch(`/api/notes?type=${tabType}&page=${usePage}&limit=20`);
       
       if (!response.ok) {
@@ -136,11 +139,20 @@ export default function NotesPage() {
       }
       
       const data = await response.json();
+      console.log(`쪽지 목록 응답: ${tabType}, 개수: ${data.notes?.length || 0}`);
       const newNotes = data.notes || [];
+      
+      // 첫 페이지이고 데이터가 없는 경우
+      if (usePage === 1 && newNotes.length === 0) {
+        setTabNotes([]);
+        setTabHasMore(false);
+        return;
+      }
       
       // 추가 데이터가 없으면 더 이상 로드하지 않음
       if (newNotes.length === 0) {
         setTabHasMore(false);
+        return;
       }
       
       // 기존 데이터에 추가할지 새로 설정할지 결정
@@ -153,7 +165,7 @@ export default function NotesPage() {
       // setTabTotalPages(data.totalPages || 1);
       
       // 마지막 페이지인지 확인
-      if (usePage >= (data.totalPages || 1)) {
+      if (data.totalPages && usePage >= data.totalPages) {
         setTabHasMore(false);
       } else {
         setTabHasMore(true);
@@ -167,6 +179,7 @@ export default function NotesPage() {
         }
       }
     } catch (error) {
+      console.error('쪽지 목록 로드 오류:', error);
       toast.error('쪽지 목록을 불러오는 데 실패했습니다.' + error);
       setTabHasMore(false);
     } finally {
@@ -176,15 +189,25 @@ export default function NotesPage() {
 
   // 다음 페이지 로드
   const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      const nextPage = page + 1;
-      if (activeTab === 'received') {
-        setReceivedPage(nextPage);
-        fetchNotes('received', nextPage, true, true);
-      } else {
-        setSentPage(nextPage);
-        fetchNotes('sent', nextPage, true, true);
-      }
+    if (loading) {
+      console.log('이미 로딩 중이므로 추가 로드 무시');
+      return;
+    }
+    
+    if (!hasMore) {
+      console.log('더 이상 로드할 데이터가 없습니다');
+      return;
+    }
+    
+    console.log(`추가 데이터 로드 시도: ${activeTab} 탭, 현재 페이지 ${page}`);
+    const nextPage = page + 1;
+    
+    if (activeTab === 'received') {
+      setReceivedPage(nextPage);
+      fetchNotes('received', nextPage, true, true);
+    } else {
+      setSentPage(nextPage);
+      fetchNotes('sent', nextPage, true, true);
     }
   }, [loading, hasMore, page, activeTab, fetchNotes]);
 
@@ -203,7 +226,7 @@ export default function NotesPage() {
           loadMore();
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.1 }
     );
     
     // 로드 더 보기 요소 관찰 시작
@@ -445,46 +468,46 @@ export default function NotesPage() {
   // 선택된 쪽지가 있는지 확인
   const hasSelectedNote = !!noteSelection.noteDetails;
   
+  // 컴포넌트 마운트 감지
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // 로딩 상태 표시를 전체 페이지 대신 섹션별로 처리
   if (status === 'loading') {
     return <Loading />;
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-100">
-      <Sidebar />
+    <div className="min-h-screen overflow-x-hidden">
+      {/* Loading Indicator */}
+      {loading && <Loading />}
+      
+      {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
-      
-      {isMenuOpen && (
-        <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
-      )}
-      
-      <main className="flex-1 md:ml-60 p-4 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">쪽지함</h1>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleOpenComposeModal}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                <span>쪽지 보내기</span>
-              </button>
-              
-              <button
-                onClick={handleRefresh}
-                className="p-2 rounded-md hover:bg-gray-800 transition-colors"
-                title="새로고침"
-              >
-                <RefreshCw className="w-5 h-5" />
-              </button>
+
+      {/* Hamburger Menu */}
+      <HamburgerMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} />
+
+      {/* Left Sidebar */}
+      <Sidebar />
+
+      <div className="min-h-screen flex flex-col items-center px-4 md:pl-64 pb-8 w-full">
+        <div className="w-full max-w-6xl pt-20 md:pt-8">
+          {/* Header */}
+          <div className="flex flex-col gap-1 mb-8">
+            <div className="flex items-baseline">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                쪽지함
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <p className="text-gray-400 text-sm">다른 사용자들과 쪽지를 주고받으며 소통해보세요.</p>
             </div>
           </div>
           
           {/* 탭 메뉴 */}
-          <div className="flex mb-4 border-b border-gray-700">
+          <div className="flex mb-6 border-b border-gray-700">
             <button
               onClick={() => handleTabChange('received')}
               className={`flex items-center gap-2 px-4 py-2 border-b-2 ${
@@ -496,8 +519,20 @@ export default function NotesPage() {
               <Inbox className="w-5 h-5" />
               <span>받은 쪽지함</span>
             </button>
-            
+
             <button
+              onClick={handleOpenComposeModal}
+              className={`flex items-center gap-2 px-4 py-2 border-b-2 cursor-pointer ${
+                activeTab === 'sent'
+                  ? 'border-indigo-500 text-indigo-400'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <SendHorizontal className="w-5 h-5" />
+              <span>쪽지 보내기</span>
+            </button>
+            
+            {/* <button
               onClick={() => handleTabChange('sent')}
               className={`flex items-center gap-2 px-4 py-2 border-b-2 ${
                 activeTab === 'sent'
@@ -507,7 +542,7 @@ export default function NotesPage() {
             >
               <SendHorizontal className="w-5 h-5" />
               <span>보낸 쪽지함</span>
-            </button>
+            </button> */}
           </div>
           
           {/* 모바일 화면: 쪽지 목록과 상세보기 전환 */}
@@ -521,42 +556,52 @@ export default function NotesPage() {
               >
                 <div className={`transition-opacity duration-200 ${loading ? 'opacity-70' : 'opacity-100'}`}>
                   {loading && notes.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/30">
+                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/30 rounded-xl">
                       <div className="loader w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
-                  <NoteList
-                    notes={notes}
-                    selectedNoteId={noteSelection.selectedNoteId}
-                    onNoteSelect={handleNoteSelect}
-                    onDeleteNote={handleDeleteNote}
-                    onRefresh={handleRefresh}
-                    isReceived={activeTab === 'received'}
-                  />
-                  
-                  {/* 무한 스크롤 로딩 인디케이터 */}
-                  {notes.length > 0 && (
-                    <div ref={loadMoreRef} className="py-4 flex justify-center">
-                      {loading && hasMore ? (
-                        <div className="loader w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                      ) : hasMore ? (
-                        <span className="text-sm text-gray-400">스크롤하여 더 불러오기</span>
-                      ) : (
-                        <span className="text-sm text-gray-500">모든 쪽지를 불러왔습니다</span>
-                      )}
-                    </div>
-                  )}
+                  <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 max-h-[calc(100vh-250px)] overflow-y-auto">
+                    <NoteList
+                      notes={notes}
+                      selectedNoteId={noteSelection.selectedNoteId}
+                      onNoteSelect={handleNoteSelect}
+                      onDeleteNote={handleDeleteNote}
+                      onRefresh={handleRefresh}
+                      isReceived={activeTab === 'received'}
+                    />
+                    
+                    {/* 무한 스크롤 로딩 인디케이터 - NoteList 내부로 이동 */}
+                    {notes.length > 0 && (
+                      <div ref={loadMoreRef} className="py-4 flex justify-center">
+                        {loading && hasMore ? (
+                          <div className="loader w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : hasMore ? (
+                          <button 
+                            onClick={loadMore}
+                            className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-2 px-4 py-2 rounded-full hover:bg-indigo-500/10 transition-colors"
+                          >
+                            <span>더 불러오기</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                          </button>
+                        ) : (
+                          <span className="text-sm text-gray-500">모든 쪽지를 불러왔습니다</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
-              {/* 쪽지 상세 내용 - 고정된 위치에 렌더링하고 표시 여부만 투명도로 제어 */}
+              {/* 쪽지 상세 내용 */}
               <div 
                 className={`transition-opacity duration-300 ease-in-out absolute inset-0 ${
                   showMobileDetail && noteSelection.noteDetails ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                 }`}
               >
                 {noteSelection.noteDetails && (
-                  <div>
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
                     <button 
                       onClick={handleBackToList}
                       className="flex items-center gap-1 text-indigo-400 mb-3"
@@ -579,53 +624,65 @@ export default function NotesPage() {
           </div>
           
           {/* 데스크톱 화면: 그리드 레이아웃 유지 */}
-          <div className="hidden md:grid md:grid-cols-3 gap-4 min-h-[calc(100vh-240px)]">
+          <div className="hidden md:grid md:grid-cols-3 gap-6">
             {/* 쪽지 목록 */}
-            <div className="md:col-span-1 flex flex-col relative" style={{ maxHeight: 'calc(100vh - 240px)', overflowY: 'auto' }}>
+            <div className="md:col-span-1 flex flex-col">
               <div className={`transition-opacity duration-200 ${loading && notes.length === 0 ? 'opacity-70' : 'opacity-100'}`}>
                 {loading && notes.length === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/30">
+                  <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/30 rounded-xl">
                     <div className="loader w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 )}
-                <NoteList
-                  notes={notes}
-                  selectedNoteId={noteSelection.selectedNoteId}
-                  onNoteSelect={handleNoteSelect}
-                  onDeleteNote={handleDeleteNote}
-                  onRefresh={handleRefresh}
-                  isReceived={activeTab === 'received'}
-                />
-                
-                {/* 무한 스크롤 로딩 인디케이터 */}
-                {notes.length > 0 && (
-                  <div ref={loadMoreRef} className="py-4 flex justify-center">
-                    {loading && hasMore ? (
-                      <div className="loader w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                    ) : hasMore ? (
-                      <span className="text-sm text-gray-400">스크롤하여 더 불러오기</span>
-                    ) : (
-                      <span className="text-sm text-gray-500">모든 쪽지를 불러왔습니다</span>
+                <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 shadow-lg overflow-hidden">
+                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
+                    <NoteList
+                      notes={notes}
+                      selectedNoteId={noteSelection.selectedNoteId}
+                      onNoteSelect={handleNoteSelect}
+                      onDeleteNote={handleDeleteNote}
+                      onRefresh={handleRefresh}
+                      isReceived={activeTab === 'received'}
+                    />
+                    
+                    {/* 무한 스크롤 로딩 인디케이터 */}
+                    {notes.length > 0 && (
+                      <div ref={loadMoreRef} className="py-4 flex justify-center">
+                        {loading && hasMore ? (
+                          <div className="loader w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : hasMore ? (
+                          <button 
+                            onClick={loadMore}
+                            className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-2 px-4 py-2 rounded-full hover:bg-indigo-500/10 transition-colors"
+                          >
+                            <span>더 불러오기</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                          </button>
+                        ) : (
+                          <span className="text-sm text-gray-500">모든 쪽지를 불러왔습니다</span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
             
             {/* 쪽지 내용 */}
             <div className="md:col-span-2 transition-opacity duration-300" style={{ opacity: hasSelectedNote ? 1 : 0.5 }}>
-              <NoteDetail
-                note={noteSelection.noteDetails}
-                onDeleteNote={handleDeleteNote}
-                onReplyNote={handleReplyNote}
-                isReceived={activeTab === 'received'}
-              />
+              <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 shadow-lg overflow-hidden">
+                <NoteDetail
+                  note={noteSelection.noteDetails}
+                  onDeleteNote={handleDeleteNote}
+                  onReplyNote={handleReplyNote}
+                  isReceived={activeTab === 'received'}
+                />
+              </div>
             </div>
           </div>
-          
-          {/* 페이지네이션 대신 무한 스크롤을 사용하므로 제거 */}
         </div>
-      </main>
+      </div>
       
       <ComposeNoteModal
         isOpen={isComposeModalOpen}

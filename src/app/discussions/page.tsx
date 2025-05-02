@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Filter, Search, Calendar, Users, Globe, Lock, BookOpen, SlidersHorizontal, PenTool, Heart, MessageCircle } from "lucide-react";
+import { Search, Calendar, Users, Globe, Lock, BookOpen, SlidersHorizontal, PenTool, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 // Components
 import HamburgerMenu from "@/components/HamburgerMenu";
@@ -18,6 +19,7 @@ import Logo from "@/components/Logo";
 type PrivacyType = 'public' | 'private' | 'invitation' | 'all';
 
 interface Author {
+  id: string;
   name: string | null;
   image: string | null;
 }
@@ -98,6 +100,7 @@ export default function DiscussionsPage() {
         title: string;
         content: string;
         author?: {
+          id?: string;
           name?: string | null;
           image?: string | null;
         };
@@ -115,26 +118,34 @@ export default function DiscussionsPage() {
       }
 
       // Map API response to Discussion interface
-      const formattedDiscussions = data.discussions.map((discussion: ApiDiscussion) => ({
-        id: discussion.id,
-        title: discussion.title,
-        content: discussion.content,
-        author: {
-          name: discussion.author?.name || '익명',
-          image: discussion.author?.image || null
-        },
-        bookTitle: discussion.bookTitle,
-        bookAuthor: discussion.bookAuthor,
-        createdAt: discussion.createdAt,
-        likes: discussion.likes || 0,
-        comments: discussion.comments || 0,
-        tags: discussion.tags || [],
-        imageUrls: discussion.imageUrls || [],
-        scheduledAt: discussion.scheduledAt,
-        maxParticipants: discussion.maxParticipants,
-        currentParticipants: discussion.currentParticipants || 0,
-        privacy: discussion.privacy
-      }));
+      const formattedDiscussions = data.discussions.map((discussion: ApiDiscussion) => {
+        // 만약 author.id가 없다면, 이를 처리할 수 없으므로 에러 로깅
+        if (!discussion.author?.id) {
+          console.error('Author ID missing for discussion:', discussion.id);
+        }
+        
+        return {
+          id: discussion.id,
+          title: discussion.title,
+          content: discussion.content,
+          author: {
+            id: discussion.author?.id || `unknown-${discussion.id}`, // 임시 ID 할당
+            name: discussion.author?.name || '익명',
+            image: discussion.author?.image || null
+          },
+          bookTitle: discussion.bookTitle,
+          bookAuthor: discussion.bookAuthor,
+          createdAt: discussion.createdAt,
+          likes: discussion.likes || 0,
+          comments: discussion.comments || 0,
+          tags: discussion.tags || [],
+          imageUrls: discussion.imageUrls || [],
+          scheduledAt: discussion.scheduledAt,
+          maxParticipants: discussion.maxParticipants,
+          currentParticipants: discussion.currentParticipants || 0,
+          privacy: discussion.privacy
+        };
+      });
 
       // 중요 변경: 페이지가 0일 때는 이전 상태를 덮어쓰기(새로운 배열 설정)
       // 페이지가 0보다 크면 이전 상태에 추가
@@ -297,9 +308,9 @@ export default function DiscussionsPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-       {/* Loading Indicator */}
-       {isLoading && <Loading />}
-       
+      {/* Loading Indicator */}
+      {isLoading && <Loading />}
+
       {/* Mobile Header */}
       <MobileHeader isMenuOpen={isMenuOpen} onMenuToggle={setIsMenuOpen} />
 
@@ -336,36 +347,33 @@ export default function DiscussionsPage() {
           <div className="mb-6 space-y-4">
             {/* Basic Search and Sort */}
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="토론 검색..."
-                  className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={filters.searchQuery}
-                  onChange={(e) => updateFilter('searchQuery', e.target.value)}
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => updateFilter('sortBy', e.target.value)}
-                    className="appearance-none bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-2 pl-10 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="최신순">최신순</option>
-                    <option value="인기순">인기순</option>
-                    <option value="댓글순">댓글순</option>
-                    <option value="참가자순">참가자순</option>
-                  </select>
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="flex flex-1 gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="토론 검색..."
+                    className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={filters.searchQuery}
+                    onChange={(e) => updateFilter('searchQuery', e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
                 <button
                   onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                  className="flex items-center gap-2 text-sm px-3 py-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors self-start"
+                  className="flex items-center justify-center w-10 h-10 text-sm rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                 </button>
+                <div className="flex items-center justify-between">
+                  {isFilterActive && (
+                    <button
+                      onClick={resetFilters}
+                      className="text-xs px-3 py-3 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
+                    >
+                      필터 초기화
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -465,19 +473,7 @@ export default function DiscussionsPage() {
           </div>
 
           {/* Filter Results Display */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-gray-400">
-              총 <span className="text-white font-medium">{sortedDiscussions.length}</span>개의 토론이 있습니다
-            </div>
-            {isFilterActive && (
-              <button
-                onClick={resetFilters}
-                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors"
-              >
-                필터 초기화
-              </button>
-            )}
-          </div>
+
 
           {/* Discussion List */}
           {!isLoading && isFilterExpanded && sortedDiscussions.length === 0 ? (
@@ -485,8 +481,8 @@ export default function DiscussionsPage() {
           ) : (
             <div className="flex flex-col gap-6">
               {sortedDiscussions.map((discussion) => (
-                <div 
-                  key={discussion.id} 
+                <div
+                  key={discussion.id}
                   className="bg-gray-800/30 rounded-xl p-4 md:p-5 border border-gray-700/30 backdrop-blur-sm hover:shadow-lg transition-all hover:bg-gray-800/50"
                 >
                   <DiscussionItem
@@ -496,8 +492,6 @@ export default function DiscussionsPage() {
               ))}
             </div>
           )}
-
-         
 
           {/* End Message */}
           <div ref={loadingRef} className="w-full py-8 flex flex-col items-center justify-center">
@@ -540,9 +534,17 @@ function DiscussionItem({
 }: {
   discussion: Discussion,
 }) {
+  const { data: session } = useSession();
   const [imageError, setImageError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const router = useRouter();
+
+  // 세션 디버깅
+  useEffect(() => {
+    console.log('Session in DiscussionItem:', session);
+    console.log('User ID:', session?.user?.id);
+    console.log('Author ID:', discussion.author.id);
+  }, [session, discussion.author.id]);
 
   // 토론 클릭 핸들러
   const handleDiscussionClick = () => {
@@ -550,12 +552,9 @@ function DiscussionItem({
   };
 
   return (
-    <div 
-      className="relative flex flex-col overflow-hidden transition-all cursor-pointer hover:scale-[1.01]" 
-      onClick={handleDiscussionClick}
-    >
+    <div className="relative flex flex-col overflow-hidden transition-all hover:scale-[1.01]">
       {/* 모바일 레이아웃 */}
-      <div className="flex md:hidden w-full mb-3">
+      <div className="flex md:hidden w-full mb-3" onClick={handleDiscussionClick}>
         {/* 책 이미지 */}
         <div className="w-[100px] h-[160px] flex-shrink-0 relative overflow-hidden rounded-lg border border-gray-700/30">
           {discussion.imageUrls.length > 0 && !imageError ? (
@@ -568,7 +567,7 @@ function DiscussionItem({
                 </div>
               )}
               <Image
-                src={discussion.imageUrls[0]} 
+                src={discussion.imageUrls[0]}
                 alt={discussion.title}
                 width={100}
                 height={140}
@@ -614,17 +613,27 @@ function DiscussionItem({
               )}
             </div>
             
-            {/* 작성자 이름 */}
-            <span className="ml-2 text-sm text-gray-300 line-clamp-1 truncate">
-              {discussion.author.name || '익명'}
-            </span>
+            {/* 작성자 이름 및 팔로우 버튼 */}
+            <div className="flex items-center ml-2">
+              <span className="text-sm text-gray-300 line-clamp-1 truncate">
+                {discussion.author.name || '익명'}
+              </span>
+              
+              {/* 팔로우 버튼 컴포넌트 사용 */}
+              {/* <FollowButton
+                followingId={discussion.author.id}
+                followingName={discussion.author.name || '익명'}
+                variant="text"
+                showIcon={true}
+              /> */}
+            </div>
           </div>
-          
+
           {/* 토론 제목 */}
           <h3 className="text-base font-medium text-white line-clamp-2 mb-1 min-h-[50px]">
             {discussion.title}
           </h3>
-          
+
           {/* 책 정보 */}
           <div className="flex flex-wrap gap-1 mb-2">
             <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/50 text-white">
@@ -636,7 +645,7 @@ function DiscussionItem({
               <span className="truncate max-w-[80px]">{discussion.bookAuthor}</span>
             </div>
           </div>
-          
+
           {/* 토론 예정 및 참여 현황 - 모바일에서만 표시 */}
           <div className="flex flex-col space-y-2">
             {/* 토론 예정 날짜 */}
@@ -694,7 +703,7 @@ function DiscussionItem({
                   </div>
                 )}
                 <Image
-                  src={discussion.imageUrls[0]} 
+                  src={discussion.imageUrls[0]}
                   alt={discussion.title}
                   width={200}
                   height={240}
@@ -729,6 +738,7 @@ function DiscussionItem({
             id={discussion.id}
             title={discussion.title}
             author={discussion.author.name || '익명'}
+            authorId={discussion.author.id}
             authorImage={discussion.author.image || ''}
             bookTitle={discussion.bookTitle}
             bookAuthor={discussion.bookAuthor}

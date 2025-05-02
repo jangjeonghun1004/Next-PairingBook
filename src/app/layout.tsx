@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Toaster } from 'react-hot-toast';
+import CustomToaster from "@/components/CustomToaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,8 +25,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className="overflow-y-scroll">
       <body className={`${inter.className} overflow-x-hidden`}>
-        <Providers>{children}</Providers>
-        <Toaster position="top-center" />
+        <Providers>
+          {children}
+          <CustomToaster />
+        </Providers>
       </body>
     </html>
   );

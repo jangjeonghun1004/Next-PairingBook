@@ -99,13 +99,6 @@ export default function MyCreatedDiscussions({ discussions, onDiscussionDeleted 
 
   return (
     <section className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-indigo-400" />
-          <h2 className="text-xl font-semibold">내가 작성한 토론</h2>
-        </div>
-      </div>
-
       {discussions.length === 0 ? (
         <EmptyState message="아직 작성한 토론이 없습니다." />
       ) : (

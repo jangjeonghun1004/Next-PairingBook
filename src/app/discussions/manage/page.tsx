@@ -7,13 +7,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import {
-  ArrowRight,
   Users,
   Calendar,
   AlertTriangle,
   LogOut,
   BookOpen,
   Pencil,
+  PlusCircle,
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import Loading from '@/components/Loading';
@@ -73,6 +73,7 @@ interface DiscussionData {
 
 export default function DiscussionsManagePage() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'created' | 'participating' | 'pending'>('created');
   const router = useRouter();
   const { data: session, status } = useSession();
   const [cancelDiscussionId, setCancelDiscussionId] = useState<string | null>(null);
@@ -240,201 +241,228 @@ export default function DiscussionsManagePage() {
             </div>
           </div>
 
-          <div className="mx-auto space-y-10">
+          {/* 탭 네비게이션 */}
+          <div className="flex border-b border-gray-700 mb-6">
+            <button
+              onClick={() => setActiveTab('created')}
+              className={`px-4 py-3 text-sm font-medium flex items-center gap-2 ${
+                activeTab === 'created'
+                  ? 'text-indigo-400 border-b-2 border-indigo-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              내 토론
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('participating')}
+              className={`px-4 py-3 text-sm font-medium flex items-center gap-2 ${
+                activeTab === 'participating'
+                  ? 'text-green-400 border-b-2 border-green-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              참여중인 토론
+              {data.myDiscussions.filter(d => hasStatus(d, 'APPROVED')).length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-green-500/20 text-green-400 rounded-full">
+                  {data.myDiscussions.filter(d => hasStatus(d, 'APPROVED')).length}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-3 text-sm font-medium flex items-center gap-2 ${
+                activeTab === 'pending'
+                  ? 'text-yellow-400 border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4" />
+              승인 대기중
+              {data.myDiscussions.filter(d => hasStatus(d, 'PENDING')).length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-400 rounded-full">
+                  {data.myDiscussions.filter(d => hasStatus(d, 'PENDING')).length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="mx-auto">
             {data.isLoading ? (
               <Loading />
             ) : data.error ? (
               <ErrorState />
             ) : (
               <>
-                {/* 내가 작성한 토론 섹션 */}
-                <MyCreatedDiscussions
-                  discussions={data.myCreatedDiscussions}
-                  onDiscussionDeleted={(deletedId) => {
-                    setData(prev => ({
-                      ...prev,
-                      myCreatedDiscussions: prev.myCreatedDiscussions.filter(d => d.id !== deletedId)
-                    }));
-                  }}
-                />
+                {/* 내가 작성한 토론 탭 */}
+                {activeTab === 'created' && (
+                  <MyCreatedDiscussions
+                    discussions={data.myCreatedDiscussions}
+                    onDiscussionDeleted={(deletedId) => {
+                      setData(prev => ({
+                        ...prev,
+                        myCreatedDiscussions: prev.myCreatedDiscussions.filter(d => d.id !== deletedId)
+                      }));
+                    }}
+                  />
+                )}
 
-                {/* 참여 중인 토론 섹션 */}
-                <section className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-green-400" />
-                      <h2 className="text-xl font-semibold">참여 중인 토론</h2>
-                    </div>
-                    <Link href="/discussions" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-                      더보기 <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-
-                  {data.myDiscussions.length === 0 ? (
-                    <EmptyState message="아직 참여 중인 토론이 없습니다." />
-                  ) : (
-                    <>
-                      {/* 승인된 토론 */}
-                      {data.myDiscussions.filter(d => hasStatus(d, 'APPROVED')).length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {data.myDiscussions
-                            .filter(d => hasStatus(d, 'APPROVED'))
-                            .map((discussion) => (
-                              <div
-                                key={discussion.id}
-                                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-gray-800/70 transition-colors group"
-                              >
-                                <Link href={`/discussions/${discussion.id}`}>
-                                  <div className="aspect-video mb-3 relative rounded-lg overflow-hidden">
-                                    <Image
-                                      src={discussion.imageUrls[0] || '/images/default-book.jpg'}
-                                      alt={discussion.title}
-                                      width={300}
-                                      height={169}
-                                      className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                    <div className="absolute bottom-2 left-2 flex gap-2">
-                                      <div className="text-sm font-medium bg-indigo-500/80 px-2 py-1 rounded-full">
-                                        {discussion.privacy === 'public' ? '공개' : '비공개'}
-                                      </div>
-                                    </div>
+                {/* 참여 중인 토론 탭 */}
+                {activeTab === 'participating' && (
+                  <section>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {data.myDiscussions
+                        .filter(d => hasStatus(d, 'APPROVED'))
+                        .map((discussion) => (
+                          <div
+                            key={discussion.id}
+                            className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-gray-800/70 transition-colors group"
+                          >
+                            <Link href={`/discussions/${discussion.id}`}>
+                              <div className="aspect-video mb-3 relative rounded-lg overflow-hidden">
+                                <Image
+                                  src={discussion.imageUrls[0] || '/images/default-book.jpg'}
+                                  alt={discussion.title}
+                                  width={300}
+                                  height={169}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                                <div className="absolute bottom-2 left-2 flex gap-2">
+                                  <div className="text-sm font-medium bg-indigo-500/80 px-2 py-1 rounded-full">
+                                    {discussion.privacy === 'public' ? '공개' : '비공개'}
                                   </div>
+                                </div>
+                              </div>
 
-                                  <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
-                                  <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                                    <BookOpen className="w-4 h-4" />
-                                    <span className="line-clamp-1">{discussion.bookTitle}</span>
-                                    <Pencil className="w-4 h-4" />
-                                    <span className="line-clamp-1">{discussion.bookAuthor}</span>
-                                  </div>
+                              <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
+                              <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                                <BookOpen className="w-4 h-4" />
+                                <span className="line-clamp-1">{discussion.bookTitle}</span>
+                                <Pencil className="w-4 h-4" />
+                                <span className="line-clamp-1">{discussion.bookAuthor}</span>
+                              </div>
 
-                                  <div className="flex justify-between text-sm text-gray-400">
-                                    <div className="flex items-center gap-1">
-                                      <Users className="w-3 h-3" />
-                                      <span>{discussion.participantCount}명 참여 중</span>
-                                    </div>
+                              <div className="flex justify-between text-sm text-gray-400">
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  <span>{discussion.participantCount}명 참여 중</span>
+                                </div>
 
-                                    {discussion.scheduledAt && (
-                                      <div className="flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        <span>{new Date(discussion.scheduledAt).toLocaleDateString()}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </Link>
-
-                                {/* 참여자 목록 표시 - 새로 추가 */}
-                                {discussion.participants && discussion.participants.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t border-gray-700">
-                                    <h3 className="text-xs text-gray-400 mb-2">참여자</h3>
-                                    <div className="flex flex-wrap gap-1">
-                                      {discussion.participants.slice(0, 5).map(participant => (
-                                        <div key={participant.id} className="w-6 h-6 rounded-full overflow-hidden" title={participant.user.name || '사용자'}>
-                                          {participant.user.image ? (
-                                            <Image
-                                              src={participant.user.image}
-                                              alt={participant.user.name || '사용자'}
-                                              width={24}
-                                              height={24}
-                                              className="w-full h-full object-cover"
-                                            />
-                                          ) : (
-                                            <div className="w-full h-full bg-indigo-800 flex items-center justify-center">
-                                              <span className="text-xs font-medium">{(participant.user.name || '?')[0]}</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                      ))}
-                                      {discussion.participants.length > 5 && (
-                                        <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
-                                          <span className="text-xs">+{discussion.participants.length - 5}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* 참여 취소 버튼 (토론 생성자가 아닐 경우에만 표시) */}
-                                {discussion.author.id !== session?.user?.id && (
-                                  <div className="mt-3 pt-3 border-t border-gray-700">
-                                    <button
-                                      onClick={() => setCancelDiscussionId(discussion.id)}
-                                      className="w-full px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm transition-colors flex items-center justify-center gap-1.5"
-                                    >
-                                      <LogOut className="w-3.5 h-3.5" />
-                                      <span>참여 취소</span>
-                                    </button>
+                                {discussion.scheduledAt && (
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{new Date(discussion.scheduledAt).toLocaleDateString()}</span>
                                   </div>
                                 )}
                               </div>
-                            ))}
-                        </div>
-                      )}
+                            </Link>
 
-                      {/* 승인된 토론 섹션에 아무것도 없을 경우 메시지 표시 */}
-                      {data.myDiscussions.filter(d => hasStatus(d, 'APPROVED')).length === 0 && (
-                        <div className="text-gray-400 text-center py-8">
-                          <p>승인된 토론이 없습니다.</p>
-                        </div>
-                      )}
-
-                      {/* 대기 중인 토론이 있을 경우에만 표시 */}
-                      {data.myDiscussions.filter(d => hasStatus(d, 'PENDING')).length > 0 && (
-                        <>
-                          <div className="mt-8 mb-4">
-                            <div className="flex items-center gap-2">
-                              <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                              <h3 className="text-lg font-medium">승인 대기 중인 토론</h3>
-                            </div>
-                            <p className="text-sm text-gray-400 mt-1 ml-7">참여 승인을 기다리고 있는 토론입니다.</p>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {data.myDiscussions
-                              .filter(d => hasStatus(d, 'PENDING'))
-                              .map((discussion) => (
-                                <Link
-                                  key={discussion.id}
-                                  href={`/discussions/${discussion.id}`}
-                                  className="bg-gray-800/50 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-4 hover:bg-gray-800/70 transition-colors"
-                                >
-                                  <div className="aspect-video mb-3 relative rounded-lg overflow-hidden">
-                                    <div className="absolute inset-0 bg-black/20 z-10"></div>
-                                    <Image
-                                      src={discussion.imageUrls[0] || '/images/default-book.jpg'}
-                                      alt={discussion.title}
-                                      width={300}
-                                      height={169}
-                                      className="w-full h-full object-cover blur-[1px]"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                    <div className="absolute bottom-2 left-2 z-20">
-                                      <div className="text-sm font-medium bg-yellow-500/80 px-2 py-1 rounded-full">
-                                        승인 대기 중
-                                      </div>
+                            {/* 참여자 목록 표시 */}
+                            {discussion.participants && discussion.participants.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-700">
+                                <h3 className="text-xs text-gray-400 mb-2">참여자</h3>
+                                <div className="flex flex-wrap gap-1">
+                                  {discussion.participants.slice(0, 5).map(participant => (
+                                    <div key={participant.id} className="w-6 h-6 rounded-full overflow-hidden" title={participant.user.name || '사용자'}>
+                                      {participant.user.image ? (
+                                        <Image
+                                          src={participant.user.image}
+                                          alt={participant.user.name || '사용자'}
+                                          width={24}
+                                          height={24}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full bg-indigo-800 flex items-center justify-center">
+                                          <span className="text-xs font-medium">{(participant.user.name || '?')[0]}</span>
+                                        </div>
+                                      )}
                                     </div>
-                                  </div>
+                                  ))}
+                                  {discussion.participants.length > 5 && (
+                                    <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
+                                      <span className="text-xs">+{discussion.participants.length - 5}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
-                                  <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
-                                  <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-                                    <BookOpen className="w-4 h-4" />
-                                    <span className="line-clamp-1">{discussion.bookTitle}</span>
-                                    <Pencil className="w-4 h-4" />
-                                    <span className="line-clamp-1">{discussion.bookAuthor}</span>
-                                  </div>
-
-                                  <div className="text-xs text-yellow-400/80">
-                                    참여 승인을 기다리고 있습니다
-                                  </div>
-                                </Link>
-                              ))}
+                            {/* 참여 취소 버튼 (토론 생성자가 아닐 경우에만 표시) */}
+                            {discussion.author.id !== session?.user?.id && (
+                              <div className="mt-3 pt-3 border-t border-gray-700">
+                                <button
+                                  onClick={() => setCancelDiscussionId(discussion.id)}
+                                  className="w-full px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                  <LogOut className="w-3.5 h-3.5" />
+                                  <span>참여 취소</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </section>
+                        ))}
+                    </div>
+                    
+                    {data.myDiscussions.filter(d => hasStatus(d, 'APPROVED')).length === 0 && (
+                      <EmptyState message="참여 중인 토론이 없습니다." />
+                    )}
+                  </section>
+                )}
+
+                {/* 승인 대기 중인 토론 탭 */}
+                {activeTab === 'pending' && (
+                  <section>
+                    {data.myDiscussions.filter(d => hasStatus(d, 'PENDING')).length === 0 ? (
+                      <EmptyState message="승인 대기 중인 토론이 없습니다." />
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {data.myDiscussions
+                          .filter(d => hasStatus(d, 'PENDING'))
+                          .map((discussion) => (
+                            <Link
+                              key={discussion.id}
+                              href={`/discussions/${discussion.id}`}
+                              className="bg-gray-800/50 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-4 hover:bg-gray-800/70 transition-colors"
+                            >
+                              <div className="aspect-video mb-3 relative rounded-lg overflow-hidden">
+                                <div className="absolute inset-0 bg-black/20 z-10"></div>
+                                <Image
+                                  src={discussion.imageUrls[0] || '/images/default-book.jpg'}
+                                  alt={discussion.title}
+                                  width={300}
+                                  height={169}
+                                  className="w-full h-full object-cover blur-[1px]"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                                <div className="absolute bottom-2 left-2 z-20">
+                                  <div className="text-sm font-medium bg-yellow-500/80 px-2 py-1 rounded-full">
+                                    승인 대기 중
+                                  </div>
+                                </div>
+                              </div>
+
+                              <h3 className="font-medium line-clamp-1 mb-1">{discussion.title}</h3>
+                              <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                                <BookOpen className="w-4 h-4" />
+                                <span className="line-clamp-1">{discussion.bookTitle}</span>
+                                <Pencil className="w-4 h-4" />
+                                <span className="line-clamp-1">{discussion.bookAuthor}</span>
+                              </div>
+
+                              <div className="text-xs text-yellow-400/80">
+                                참여 승인을 기다리고 있습니다
+                              </div>
+                            </Link>
+                          ))}
+                      </div>
+                    )}
+                  </section>
+                )}
               </>
             )}
           </div>

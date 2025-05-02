@@ -1,9 +1,9 @@
 'use client';
 
-import { PenTool, Heart, MessageCircle, ArrowRight, User, Flag, Shield, X, MoreHorizontal, BookOpen, Globe, Lock, Users, Calendar } from "lucide-react";
+import { PenTool, Heart, MessageCircle, ArrowRight, User, Flag, Shield, MoreHorizontal, BookOpen, Globe, Lock, Users, Calendar } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Logo from "./Logo";
+import { useSession } from "next-auth/react";
 import { timeAgo } from "@/lib/utils";
 
 // 공개 설정 타입
@@ -13,6 +13,7 @@ interface DiscussionCardProps {
   id: string;
   title: string;
   author: string;
+  authorId?: string;
   authorImage: string;
   bookTitle: string;
   bookAuthor: string;
@@ -30,6 +31,7 @@ export default function DiscussionCard({
   id,
   title,
   author,
+  authorId,
   authorImage,
   bookTitle,
   bookAuthor,
@@ -42,10 +44,17 @@ export default function DiscussionCard({
   currentParticipants,
   maxParticipants,
 }: DiscussionCardProps) {
+  const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // 세션 디버깅
+  useEffect(() => {
+    console.log('Session in DiscussionCard:', session);
+    console.log('User ID in Card:', session?.user?.id);
+    console.log('Author ID in Card:', authorId);
+  }, [session, authorId]);
 
   // 메뉴 외부 클릭 시 닫기
   useEffect(() => {
@@ -58,13 +67,6 @@ export default function DiscussionCard({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handlePairing = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
-  };
 
   // 토론 참여하기 버튼 핸들러
   const handleJoinDiscussion = (e: React.MouseEvent) => {
@@ -174,16 +176,14 @@ export default function DiscussionCard({
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1 md:gap-2">
                     <div className="text-sm md:font-medium truncate max-w-[100px] md:max-w-none">{author}</div>
-                    <span className="text-gray-400">·</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePairing();
-                      }}
-                      className="text-xs text-indigo-400 transition-colors cursor-pointer"
-                    >
-                      팔로우
-                    </button>
+                    
+                    {/* 팔로우 버튼 컴포넌트 */}
+                    {/* <span className="text-gray-400">·</span>
+                    <FollowButton
+                      followingId={authorId || ''}
+                      followingName={author}
+                      variant="text"
+                    /> */}
                   </div>
                 </div>
               </div>
@@ -281,32 +281,6 @@ export default function DiscussionCard({
           </div>
         </div>
       </div>
-
-      {/* 토스트 메시지 */}
-      {showToast && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="relative">
-            {/* 배경 그라데이션 애니메이션 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg blur-xl opacity-50 animate-gradient-x"></div>
-
-            {/* 메시지 컨테이너 */}
-            <div className="relative bg-gray-800/90 backdrop-blur-sm text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-bounce-in">
-              <div className="animate-spin-slow">
-                <Logo size="sm" />
-              </div>
-              <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                팔로우 요청이 완료되었습니다.
-              </span>
-              <button
-                onClick={() => setShowToast(false)}
-                className="p-1 hover:bg-gray-700/50 rounded-full transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 } 

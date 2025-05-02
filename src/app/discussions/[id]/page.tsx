@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -22,6 +22,7 @@ import TopicModal from "@/components/TopicModal";
 // import dynamic from "next/dynamic";
 import Loading from "@/components/Loading";
 import { useSession } from "next-auth/react";
+import FollowButton from "@/components/FollowButton";
 
 // KakaoMap 컴포넌트를 dynamic import로 로드 (클라이언트 사이드에서만 렌더링)
 // const MapComponent = dynamic(() => import('@/components/MapComponent'), {
@@ -59,7 +60,7 @@ interface Discussion {
 
 export default function DiscussionDetailPage() {
     const params = useParams();
-    // const router = useRouter();
+    const router = useRouter();
     const [discussion, setDiscussion] = useState<Discussion | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
@@ -360,12 +361,12 @@ export default function DiscussionDetailPage() {
                 <div className="w-full max-w-4xl pt-12 md:pt-8">
                     {/* 헤더 */}
                     <div className="flex items-center justify-between mb-6 sticky top-0 z-10 bg-gradient-to-r from-gray-900/95 to-gray-900/95 backdrop-blur-md py-3 sm:py-4 rounded-xl px-3 sm:px-4">
-                        <Link
-                            href="/discussions"
+                        <button
+                            onClick={() => router.back()}
                             className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-800/70 transition-all duration-200 transform hover:scale-105"
                         >
                             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </Link>
+                        </button>
                         <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500 absolute left-1/2 transform -translate-x-1/2">토론 상세</h1>
                         <div className="w-[36px] h-[36px] sm:w-[72px]"></div> {/* 좌우 균형을 맞추기 위한 더미 div */}
 
@@ -403,6 +404,13 @@ export default function DiscussionDetailPage() {
                                             </span>
                                         )}
                                     </button>
+
+                                    <FollowButton
+                                        followingId={discussion.author.id}
+                                        followingName={discussion.author.name || '익명'}
+                                        variant="text"
+                                        showIcon={true}
+                                    />
                                 </div>
 
                                 {/* 토론 제목 및 기본 정보 */}
@@ -571,7 +579,7 @@ export default function DiscussionDetailPage() {
                                         <div className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-xl border border-gray-700/50">
                                             <MapPin className="w-10 h-10 text-gray-500 mb-2" />
                                             서울 종로구 혜화로6길 17 소원책방
-                                            <div className="flex items-center ml-2 text-indigo-400 hover:text-indigo-300 transition-colors"> 
+                                            <div className="flex items-center ml-2 text-indigo-400 hover:text-indigo-300 transition-colors">
                                                 <span>웹 지도 보기</span>
                                                 <ExternalLink className="w-3.5 h-3.5 ml-1" />
                                             </div>

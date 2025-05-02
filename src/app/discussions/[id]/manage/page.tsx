@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { ArrowLeft, User2, Check, Clock, Ban, MoreHorizontal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Loading from '@/components/Loading';
 
 // 참여자 상태 타입 - 대문자로 변경
 type ParticipantStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -257,17 +258,7 @@ export default function DiscussionManagePage() {
   }, [discussion]);
   
   if (discussion.isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-4xl mx-auto py-10 flex justify-center">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.3s]"></div>
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]"></div>
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return (<Loading />);
   }
 
   if (discussion.error) {

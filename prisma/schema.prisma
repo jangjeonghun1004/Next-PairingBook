@@ -120,6 +120,7 @@ model Discussion {
   id              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title           String
   content         String
+  place           String                  
   bookTitle       String                  @map("book_title")
   bookAuthor      String                  @map("book_author")
   tags            String[]

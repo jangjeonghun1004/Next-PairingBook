@@ -1,17 +1,12 @@
 'use client';
 
-import { Toaster, Toast, resolveValue } from 'react-hot-toast';
+import { Toaster, Toast, resolveValue, toast } from 'react-hot-toast';
 import Logo from "@/components/Logo";
 import { X } from "lucide-react";
 
 // Toaster의 children 속성으로 전달되는 객체의 타입 정의
 interface ToastWithHandlers extends Toast {
-  handlers: {
-    dismiss: () => void;
-    updateHeight: (height: number) => void;
-    startPause: () => void;
-    endPause: () => void;
-  };
+  id: string;
 }
 
 export default function CustomToaster() {
@@ -32,13 +27,13 @@ export default function CustomToaster() {
       }}
     >
       {(t) => {
-        // Toast 타입에 handlers 속성이 있는 타입으로 변환
-        const toast = t as ToastWithHandlers;
+        // Toast 타입으로 변환
+        const toastItem = t as ToastWithHandlers;
         
         return (
           <div
             className={`${
-              toast.visible ? 'animate-enter' : 'animate-leave'
+              toastItem.visible ? 'animate-enter' : 'animate-leave'
             } max-w-md`}
           >
             <div className="relative bg-gray-800/90 backdrop-blur-sm text-white px-6 py-4 rounded-lg shadow-lg border border-gray-700/30 flex items-center gap-3">
@@ -47,11 +42,11 @@ export default function CustomToaster() {
                 <Logo size="sm" />
               </div>
               <span className="font-medium bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                {resolveValue(toast.message, toast)}
+                {resolveValue(toastItem.message, toastItem)}
               </span>
-              {toast.type !== 'loading' && (
+              {toastItem.type !== 'loading' && (
                 <button
-                  onClick={() => toast.handlers.dismiss()}
+                  onClick={() => toast.dismiss(toastItem.id)}
                   className="p-1 hover:bg-gray-700/50 rounded-full transition-colors"
                 >
                   <X className="w-4 h-4" />

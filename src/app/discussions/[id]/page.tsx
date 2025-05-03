@@ -35,6 +35,7 @@ interface Discussion {
     id: string;
     title: string;
     content: string;
+    place: string;
     bookTitle: string;
     bookAuthor: string;
     tags: string[];
@@ -557,7 +558,7 @@ export default function DiscussionDetailPage() {
                                     <h2 className="text-lg font-medium">모임 장소</h2>
                                 </div>
 
-                                {true ? (
+                                {discussion.place ? (
                                     // <div className="space-y-3">
                                     //     <p className="font-medium">{discussion.location.address}</p>
                                     //     <div className="w-full h-[300px] rounded-xl overflow-hidden">
@@ -575,10 +576,10 @@ export default function DiscussionDetailPage() {
                                     //     </div>
                                     // </div>
 
-                                    <Link className="text-gray-400" href={'https://map.kakao.com/link/search/종로구 혜화로6길 17'} target="_blank">
+                                    <Link className="text-gray-400" href={`https://map.kakao.com/link/search/${discussion.place}`} target="_blank">
                                         <div className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-xl border border-gray-700/50">
                                             <MapPin className="w-10 h-10 text-gray-500 mb-2" />
-                                            서울 종로구 혜화로6길 17 소원책방
+                                            {discussion.place}
                                             <div className="flex items-center ml-2 text-indigo-400 hover:text-indigo-300 transition-colors">
                                                 <span>웹 지도 보기</span>
                                                 <ExternalLink className="w-3.5 h-3.5 ml-1" />

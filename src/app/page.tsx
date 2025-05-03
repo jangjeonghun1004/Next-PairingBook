@@ -15,8 +15,8 @@ function LoginForm({ onCallbackUrlChange }: { onCallbackUrlChange?: () => void }
   const router = useRouter();
   const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "guest@gmail.com",
+    password: "test90()",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -242,7 +242,7 @@ function LoginForm({ onCallbackUrlChange }: { onCallbackUrlChange?: () => void }
                   <div className="w-2 h-2 rounded-full bg-white animate-bounce"></div>
                 </div>
               ) : (
-                "로그인"
+                "GUEST 로그인"
               )}
             </button>
           </form>

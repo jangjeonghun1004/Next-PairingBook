@@ -74,6 +74,12 @@ export default function NotesPage() {
   // 기본 상태 관리
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
+  // 초기 로드 완료 상태 추가
+  const [initialLoadComplete, setInitialLoadComplete] = useState({
+    received: false,
+    sent: false
+  });
+  
   // 탭별 데이터와 로딩 상태 분리
   const [receivedNotes, setReceivedNotes] = useState<Note[]>([]);
   const [sentNotes, setSentNotes] = useState<Note[]>([]);
@@ -144,6 +150,13 @@ export default function NotesPage() {
       if (usePage === 1 && newNotes.length === 0) {
         setTabNotes([]);
         setTabHasMore(false);
+        
+        // 초기 로드 완료 표시 - API 응답이 비어있더라도 로드는 완료된 것
+        setInitialLoadComplete(prev => ({
+          ...prev,
+          [tabType]: true
+        }));
+        
         return;
       }
       
@@ -169,6 +182,14 @@ export default function NotesPage() {
         setTabHasMore(true);
       }
       
+      // 초기 로드 완료 표시
+      if (usePage === 1) {
+        setInitialLoadComplete(prev => ({
+          ...prev,
+          [tabType]: true
+        }));
+      }
+      
       // 선택된 쪽지가 목록에서 제거된 경우 선택 해제
       if (noteSelection.selectedNoteId && tabType === activeTab && !append) {
         const stillExists = newNotes.some((note: Note) => note.id === noteSelection.selectedNoteId);
@@ -180,10 +201,16 @@ export default function NotesPage() {
       console.error('쪽지 목록 로드 오류:', error);
       toast.error('쪽지 목록을 불러오는 데 실패했습니다.' + error);
       setTabHasMore(false);
+      
+      // 오류가 발생해도 초기 로드는 완료된 것으로 표시
+      setInitialLoadComplete(prev => ({
+        ...prev,
+        [tabType]: true
+      }));
     } finally {
       setTabLoading(false);
     }
-  }, [activeTab, receivedPage, sentPage, noteSelection.selectedNoteId, receivedLoading, sentLoading, receivedNotes, sentNotes]);
+  }, [activeTab, receivedPage, sentPage, noteSelection.selectedNoteId, receivedLoading, sentLoading]);
 
   // 다음 페이지 로드
   const loadMore = useCallback(() => {
@@ -241,18 +268,18 @@ export default function NotesPage() {
 
   // 두 탭의 초기 데이터 로드
   const initialLoadNotes = useCallback(async () => {
-    // 두 탭 모두 데이터가 비어있을 때만 초기 로드 수행
-    if (receivedNotes.length === 0) {
+    // 초기 로드가 완료되지 않은 탭에 대해서만 로드 수행
+    if (!initialLoadComplete.received) {
       await fetchNotes('received', 1, true, false);
     }
     
-    // 보낸 쪽지함은 딜레이를 두고 백그라운드로 로드
-    if (sentNotes.length === 0) {
+    // 보낸 쪽지함도 초기 로드가 완료되지 않은 경우에만 로드
+    if (!initialLoadComplete.sent) {
       setTimeout(() => {
         fetchNotes('sent', 1, false, false);
       }, 500);
     }
-  }, [fetchNotes, receivedNotes.length, sentNotes.length]);
+  }, [fetchNotes, initialLoadComplete]);
 
   // 인증 확인 및 데이터 초기 로드
   useEffect(() => {
@@ -283,21 +310,31 @@ export default function NotesPage() {
       }
     }
     
-    // 탭에 데이터가 없는 경우에만 새로고침
-    if ((tab === 'received' && receivedNotes.length === 0) || 
-        (tab === 'sent' && sentNotes.length === 0)) {
+    // 탭의 초기 로드가 아직 완료되지 않은 경우에만 데이터 로드
+    const isTabLoadComplete = initialLoadComplete[tab];
+    if (!isTabLoadComplete) {
       fetchNotes(tab, 1, true, false);
     }
-  }, [activeTab, receivedNotes, sentNotes, noteSelection.selectedNoteId, fetchNotes]);
+  }, [activeTab, receivedNotes, sentNotes, noteSelection.selectedNoteId, fetchNotes, initialLoadComplete]);
 
   // 새로고침 처리
   const handleRefresh = useCallback(() => {
     if (activeTab === 'received') {
       setReceivedPage(1);
       setReceivedHasMore(true);
+      // 새로고침 시 초기 로드 상태 초기화
+      setInitialLoadComplete(prev => ({
+        ...prev,
+        received: false
+      }));
     } else {
       setSentPage(1);
       setSentHasMore(true);
+      // 새로고침 시 초기 로드 상태 초기화
+      setInitialLoadComplete(prev => ({
+        ...prev,
+        sent: false
+      }));
     }
     fetchNotes(activeTab, 1, true, false);
   }, [activeTab, fetchNotes]);

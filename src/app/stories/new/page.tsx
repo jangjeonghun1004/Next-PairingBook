@@ -14,7 +14,7 @@ import {
 import { useSession } from "next-auth/react";
 import { toast } from 'react-hot-toast';
 import SubmittingLoading from "@/components/loading/SubmittingLoading";
-import { useUploadImage } from "@/app/hooks/useUploadImage";
+import { useUploadImage } from "@/hooks/useUploadImage";
 
 interface ImageFile {
   file: File;

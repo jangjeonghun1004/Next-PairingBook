@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     const { 
       title, 
       content, 
+      place,
       bookTitle, 
       bookAuthor, 
       tags, 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     // 필수 필드 검증
-    if (!title || !content || !bookTitle || !bookAuthor) {
+    if (!title || !content || !place || !bookTitle || !bookAuthor) {
       return NextResponse.json(
         { error: '필수 정보를 모두 입력해주세요.' },
         { status: 400 }
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     interface DiscussionCreateData {
       title: string;
       content: string;
+      place: string;
       bookTitle: string;
       bookAuthor: string;
       tags: string[];
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
     const discussionData: DiscussionCreateData = {
       title,
       content,
+      place,
       bookTitle,
       bookAuthor,
       tags: tags || [],

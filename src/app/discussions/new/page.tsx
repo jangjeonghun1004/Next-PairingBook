@@ -13,13 +13,14 @@ import {
   MessageSquare,
   Send,
   AlertCircle,
-  Calendar,
   Users,
   Globe,
-  Lock
+  Lock,
+  Calendar
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
+import DateTimePicker from "@/components/DateTimePicker";
+import { useUploadImage } from "@/hooks/useUploadImage";
 
 // 이미지 파일 인터페이스 추가
 interface ImageFile {
@@ -28,6 +29,9 @@ interface ImageFile {
   id: string;
 }
 
+
+
+
 // 공개 설정 타입
 type PrivacyType = 'public' | 'private' | 'invitation';
 
@@ -35,6 +39,7 @@ export default function NewDiscussionPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [place, setPlace] = useState("");
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -42,9 +47,12 @@ export default function NewDiscussionPage() {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const { uploadImage } = useUploadImage("story-images");
 
-  // 새로 추가된 상태
-  const [scheduledDate, setScheduledDate] = useState("");
+  // 날짜 시간 관련 상태
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
+
+  // 참가자 수와 공개 설정
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
   const [privacy, setPrivacy] = useState<PrivacyType>("public");
 
@@ -53,6 +61,8 @@ export default function NewDiscussionPage() {
     { id: 1, value: "" } // 초기 입력 필드 하나 제공
   ]);
   const [nextTopicId, setNextTopicId] = useState(2); // 다음 주제 ID
+
+
 
   // 태그 추가 함수
   const addTag = () => {
@@ -132,6 +142,11 @@ export default function NewDiscussionPage() {
       return;
     }
 
+    if (!place.trim()) {
+      toast.error("토론 장소를 입력해주세요.");
+      return;
+    }
+
     if (!bookTitle.trim()) {
       setError("책 제목을 입력해주세요.");
       return;
@@ -151,44 +166,14 @@ export default function NewDiscussionPage() {
       setIsSubmitting(true);
 
       // 이미지 업로드 처리
-      const imageUrls: string[] = [];
-
-      if (images.length > 0) {
-        const imageUploads = images.map(async (image) => {
-          try {
-            // Supabase Storage에 이미지 업로드
-            const fileName = `story-images/${Date.now()}_${image.file.name}`;
-            const { error } = await supabase.storage
-              .from('story-images')
-              .upload(fileName, image.file, {
-                cacheControl: '3600',
-                upsert: false
-              });
-
-            if (error) {
-              throw new Error(`이미지 업로드 오류: ${error.message}`);
-            }
-
-            // 이미지 URL 생성
-            const { data: publicUrlData } = supabase.storage
-              .from('story-images')
-              .getPublicUrl(fileName);
-
-            return publicUrlData.publicUrl;
-          } catch (err) {
-            console.error("이미지 업로드 실패:", err);
-            // 에러가 발생하면 로컬 임시 URL 사용
-            return URL.createObjectURL(image.file);
-          }
-        });
-
-        // 모든 이미지 업로드 완료 대기
-        imageUrls.push(...await Promise.all(imageUploads));
-      }
+      // 1) Parallel batch upload via Promise.all
+      const imageUrls = await Promise.all(
+        images.map((img) => uploadImage(img.file))
+      );
 
       // 새로 추가된 필드 처리
       // 날짜를 정확하게 변환
-      const scheduledDateTime = scheduledDate ? new Date(scheduledDate).toISOString() : null;
+      const scheduledDateTimeIso = scheduledDateTime ? scheduledDateTime.toISOString() : null;
       // 최대 참가자 수 변환
       const parsedMaxParticipants = maxParticipants ? Number(maxParticipants) : 10;
       // 토론 주제 값만 추출하여 배열로 변환
@@ -203,12 +188,13 @@ export default function NewDiscussionPage() {
         body: JSON.stringify({
           title,
           content,
+          place,
           bookTitle,
           bookAuthor,
           tags,
           topics: topicValues, // 토론 주제 값들만 전송
           imageUrls,
-          scheduledAt: scheduledDateTime,
+          scheduledAt: scheduledDateTimeIso,
           maxParticipants: parsedMaxParticipants,
           privacy: privacy
         }),
@@ -236,10 +222,7 @@ export default function NewDiscussionPage() {
   };
 
   // 미래 날짜만 선택 가능하도록 최소 날짜 설정
-  const getMinDateTime = () => {
-    const now = new Date();
-    return now.toISOString().slice(0, 16); // 'YYYY-MM-DDThh:mm' 형식
-  };
+  const minDate = new Date();
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 pb-8 w-full">
@@ -338,6 +321,20 @@ export default function NewDiscussionPage() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="place" className="block text-sm font-medium mb-2 text-gray-300">
+                  토론 장소
+                </label>
+                <input
+                  id="place"
+                  type="text"
+                  value={place}
+                  onChange={(e) => setPlace(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                  placeholder="도로명 주소를 입력하세요. (예: 서울 종로구 혜화로6길 17)"
+                />
+              </div>
+
               {/* 토론 주제 */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">
@@ -389,13 +386,11 @@ export default function NewDiscussionPage() {
                 <label htmlFor="scheduledDate" className="block text-sm font-medium mb-2 text-gray-300">
                   예정 날짜 및 시간
                 </label>
-                <input
-                  id="scheduledDate"
-                  type="datetime-local"
-                  value={scheduledDate}
-                  min={getMinDateTime()}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-700 transition-all duration-200 shadow-inner"
+                <DateTimePicker
+                  value={scheduledDateTime}
+                  onChange={setScheduledDateTime}
+                  minDate={minDate}
+                  placeholder="날짜와 시간을 선택하세요"
                 />
               </div>
 
@@ -427,8 +422,8 @@ export default function NewDiscussionPage() {
                     type="button"
                     onClick={() => setPrivacy("public")}
                     className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${privacy === "public"
-                        ? "border-green-500 bg-green-500/10"
-                        : "border-gray-700 hover:border-gray-600"
+                      ? "border-green-500 bg-green-500/10"
+                      : "border-gray-700 hover:border-gray-600"
                       }`}
                   >
                     <Globe className={`w-6 h-6 ${privacy === "public" ? "text-green-400" : "text-gray-400"}`} />
@@ -441,8 +436,8 @@ export default function NewDiscussionPage() {
                     type="button"
                     onClick={() => setPrivacy("private")}
                     className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${privacy === "private"
-                        ? "border-yellow-500 bg-yellow-500/10"
-                        : "border-gray-700 hover:border-gray-600"
+                      ? "border-yellow-500 bg-yellow-500/10"
+                      : "border-gray-700 hover:border-gray-600"
                       }`}
                   >
                     <Lock className={`w-6 h-6 ${privacy === "private" ? "text-yellow-400" : "text-gray-400"}`} />
@@ -455,8 +450,8 @@ export default function NewDiscussionPage() {
                     type="button"
                     onClick={() => setPrivacy("invitation")}
                     className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${privacy === "invitation"
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-gray-700 hover:border-gray-600"
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-gray-700 hover:border-gray-600"
                       }`}
                   >
                     <Users className={`w-6 h-6 ${privacy === "invitation" ? "text-blue-400" : "text-gray-400"}`} />
@@ -570,26 +565,26 @@ export default function NewDiscussionPage() {
 
           {/* 제출 버튼 */}
           <div className="flex justify-end">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-          <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-medium hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  처리 중...
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  토론 생성하기
-                </>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white font-medium hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    처리 중...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    토론 생성하기
+                  </>
+                )}
+              </button>
             </div>
-            
+
           </div>
         </form>
       </div>

@@ -1,4 +1,4 @@
-// hooks/useUploadImage.ts
+// @/hooks/useUploadImage.ts
 export function useUploadImage(bucket: string) {
     /**
      * 파일 하나를 Supabase에 업로드하고 public URL을 반환
